@@ -1,0 +1,13 @@
+# ninja log v5
+66	790	7197487803554590	CMakeFiles/HGA.dir/Program/main.cpp.obj	96780605189f5510
+33	756	7197487803219005	CMakeFiles/HGA.dir/Program/LocalSearch.cpp.obj	78f07f2789bb057
+44	637	7197487802019025	CMakeFiles/HGA.dir/Program/Split.cpp.obj	e004e04fc37a3e02
+2	224	7197487797919049	CMakeFiles/HGA.dir/Program/AlgorithmParameters.cpp.obj	3b69f25e41e71d99
+55	673	7197487802389023	CMakeFiles/HGA.dir/Program/Params.cpp.obj	1ad399ba0c75a5fb
+34	469	7197485823633346	CMakeFiles/HGA.dir/Program/InstanceCVRPLIB.cpp.obj	ac39ce524affd7ef
+22	576	7197487801429024	CMakeFiles/HGA.dir/Program/Genetic.cpp.obj	b5e4288abf8d4abb
+12	730	7197487802949004	CMakeFiles/HGA.dir/Program/Individual.cpp.obj	ec3dd09e132b6ad7
+0	905	7197485827962282	CMakeFiles/HGA.dir/Program/case.cpp.obj	8b283a4a3604b6a
+78	847	7197487804114592	CMakeFiles/HGA.dir/Program/Population.cpp.obj	647ed6bcf9df8824
+0	112	7197497270815592	build.ninja	13867e56fa8b1531
+1	582	7197489742041831	HGA.exe	b2da6d7deb4333be
