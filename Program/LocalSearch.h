@@ -121,7 +121,7 @@ private:
 	double loadU, loadX, loadV, loadY;
 	double serviceU, serviceX, serviceV, serviceY;
 	double penaltyCapacityLS, penaltyDurationLS ;
-	bool intraRouteMove ;
+	bool intraRouteMove ; // 是否路径内移动
 
 	void setLocalVariablesRouteU(); // 初始化一些与routeU相关的本地变量和距离，以避免在距离矩阵中总是查询相同的值
 	void setLocalVariablesRouteV(); // 初始化一些与routeV相关的本地变量和距离，以避免在距离矩阵中总是查询相同的值

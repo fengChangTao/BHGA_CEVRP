@@ -1,6 +1,13 @@
 #include "Individual.h" 
 
-
+//pair<vector<int>, double> insertStationByFeng(vector<int> route, Case& instance)
+//{
+//    list<pair<int, int>> stationInserted;
+//    for(int i = 0; i < (int)route.size() - 1; i++)
+//    {
+//
+//    }
+//}
 
 // 移除启发
 pair<vector<int>, double> insertStationByRemove(vector<int> route, Case& instance) {

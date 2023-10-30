@@ -6,20 +6,20 @@ void LocalSearch::run(Individual & indiv, double penaltyCapacityLS, double penal
 	this->penaltyDurationLS = penaltyDurationLS;
 	loadIndividual(indiv);
 
-	// Shuffling the order of the nodes explored by the LS to allow for more diversity in the search
+	// 打乱LS探索的节点的顺序，以便在搜索中有更多的多样性
 	std::shuffle(orderNodes.begin(), orderNodes.end(), params.ran);
 	std::shuffle(orderRoutes.begin(), orderRoutes.end(), params.ran);
 	for (int i = 1; i <= params.nbClients; i++)
-		if (params.ran() % params.ap.nbGranular == 0)  // O(n/nbGranular) calls to the inner function on average, to achieve linear-time complexity overall
+		if (params.ran() % params.ap.nbGranular == 0)  // 平均0 (n/nbGranular)次调用内部函数，以实现整体的线性时间复杂度
 			std::shuffle(params.correlatedVertices[i].begin(), params.correlatedVertices[i].end(), params.ran);
 
 	searchCompleted = false;
 	for (loopID = 0; !searchCompleted; loopID++)
 	{
-		if (loopID > 1) // Allows at least two loops since some moves involving empty routes are not checked at the first loop
+		if (loopID > 1) // 允许至少两个循环，因为一些涉及空路线的移动在第一个循环时没有被检查
 			searchCompleted = true;
 
-		/* CLASSICAL ROUTE IMPROVEMENT (RI) MOVES SUBJECT TO A PROXIMITY RESTRICTION */
+		/* 经典路线改进(ri)的移动受到邻近限制 */
 		for (int posU = 0; posU < params.nbClients; posU++)
 		{
 			nodeU = &clients[orderNodes[posU]];
@@ -28,9 +28,9 @@ void LocalSearch::run(Individual & indiv, double penaltyCapacityLS, double penal
 			for (int posV = 0; posV < (int)params.correlatedVertices[nodeU->cour].size(); posV++)
 			{
 				nodeV = &clients[params.correlatedVertices[nodeU->cour][posV]];
-				if (loopID == 0 || std::max<int>(nodeU->route->whenLastModified, nodeV->route->whenLastModified) > lastTestRINodeU) // only evaluate moves involving routes that have been modified since last move evaluations for nodeU
+				if (loopID == 0 || std::max<int>(nodeU->route->whenLastModified, nodeV->route->whenLastModified) > lastTestRINodeU) // 仅评估自上次移动评估以来已修改的路线中涉及的移动，用于节点nodeU
 				{
-					// Randomizing the order of the neighborhoods within this loop does not matter much as we are already randomizing the order of the node pairs (and it's not very common to find improving moves of different types for the same node pair)
+					// 在这个循环中随机化邻域的顺序并不十分重要，因为我们已经随机化了节点对的顺序（对于同一节点对，找到不同类型的改进移动并不常见）。
 					setLocalVariablesRouteU();
 					setLocalVariablesRouteV();
 					if (move1()) continue; // RELOCATE
@@ -43,7 +43,7 @@ void LocalSearch::run(Individual & indiv, double penaltyCapacityLS, double penal
 					if (!intraRouteMove && move8()) continue; // 2-OPT*
 					if (!intraRouteMove && move9()) continue; // 2-OPT*
 
-					// Trying moves that insert nodeU directly after the depot
+					// 尝试将节点nodeU直接插入到仓库之后的移动
 					if (nodeV->prev->isDepot)
 					{
 						nodeV = nodeV->prev;
@@ -57,7 +57,7 @@ void LocalSearch::run(Individual & indiv, double penaltyCapacityLS, double penal
 				}
 			}
 
-			/* MOVES INVOLVING AN EMPTY ROUTE -- NOT TESTED IN THE FIRST LOOP TO AVOID INCREASING TOO MUCH THE FLEET SIZE */
+			/* 涉及空路径的移动，在第一个循环中未经测试，以避免过度增加车队规模。 */
 			if (loopID > 0 && !emptyRoutes.empty())
 			{
 				nodeV = routes[*emptyRoutes.begin()].depot;
@@ -72,7 +72,7 @@ void LocalSearch::run(Individual & indiv, double penaltyCapacityLS, double penal
 
 		if (params.ap.useSwapStar == 1 && params.areCoordinatesProvided)
 		{
-			/* (SWAP*) MOVES LIMITED TO ROUTE PAIRS WHOSE CIRCLE SECTORS OVERLAP */
+			/* （SWAP*）移动限制在圆形扇区重叠的路径对之间 */
 			for (int rU = 0; rU < params.nbVehicles; rU++)
 			{
 				routeU = &routes[orderRoutes[rU]];
@@ -91,7 +91,7 @@ void LocalSearch::run(Individual & indiv, double penaltyCapacityLS, double penal
 		}
 	}
 
-	// Register the solution produced by the LS in the individual
+	// 将局部搜索产生的解决方案注册到个体中。
 	exportIndividual(indiv);
 }
 

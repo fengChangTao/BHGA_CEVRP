@@ -19,7 +19,7 @@ void Split::generalSplit(Individual & indiv, int nbMaxVehicles)
 		sumService[i] = sumService[i - 1] + cliSplit[i].serviceTime;
 		sumDistance[i] = sumDistance[i - 1] + cliSplit[i - 1].dnext;
 	}
-    //666
+
 	// We first try the simple split, and then the Split with limited fleet if this is not successful
 	if (splitSimple(indiv) == 0)
 		splitLF(indiv);
