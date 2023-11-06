@@ -19,7 +19,7 @@ void LocalSearch::run(Individual & indiv, double penaltyCapacityLS, double penal
 		if (loopID > 1) // 允许至少两个循环，因为一些涉及空路线的移动在第一个循环时没有被检查
 			searchCompleted = true;
 
-		/* 经典路线改进(ri)的移动受到邻近限制 */
+		/* 经典路线改进(RI)的移动受到邻近限制 */
 		for (int posU = 0; posU < params.nbClients; posU++)
 		{
 			nodeU = &clients[orderNodes[posU]];
@@ -128,8 +128,8 @@ bool LocalSearch::move1()
 {
 	double costSuppU = params.timeCost[nodeUPrevIndex][nodeXIndex] - params.timeCost[nodeUPrevIndex][nodeUIndex] - params.timeCost[nodeUIndex][nodeXIndex];
 	double costSuppV = params.timeCost[nodeVIndex][nodeUIndex] + params.timeCost[nodeUIndex][nodeYIndex] - params.timeCost[nodeVIndex][nodeYIndex];
-
-	if (!intraRouteMove)
+    // 路径剪枝
+	if (!intraRouteMove) // 如果不在同一路径
 	{
 		// Early move pruning to save CPU time. Guarantees that this move cannot improve without checking additional (load, duration...) constraints
 		if (costSuppU + costSuppV >= routeU->penalty + routeV->penalty) return false;
@@ -143,10 +143,13 @@ bool LocalSearch::move1()
 			- routeV->penalty;
 	}
 
-	if (costSuppU + costSuppV > -MY_EPSILON) return false;
-	if (nodeUIndex == nodeYIndex) return false;
+	if (costSuppU + costSuppV > -MY_EPSILON) return false;  // 如果VRP路径变长了
+	if (nodeUIndex == nodeYIndex) return false; // 如果u本来就在v后面了
 
-	insertNode(nodeU, nodeV);
+    calRouteCharge(routeU);
+
+    // 这里是已经决定更改了
+	insertNode(nodeU, nodeV);   // 更改"受影响节点"的前后指针
 	nbMoves++; // Increment move counter before updating route data
 	searchCompleted = false;
 	updateRouteData(routeU);
@@ -481,7 +484,7 @@ bool LocalSearch::move9()
 	updateRouteData(routeV);
 	return true;
 }
-
+// 计算路线U和路线V之间的所有SWAP*，并应用最佳改进移动
 bool LocalSearch::swapStar()
 {
 	SwapStarElement myBestSwapStar;
@@ -570,7 +573,7 @@ bool LocalSearch::swapStar()
 	updateRouteData(routeV);
 	return true;
 }
-
+// 计算V在路线中的插入成本和位置，其中V被省略
 double LocalSearch::getCheapestInsertSimultRemoval(Node * U, Node * V, Node *& bestPosition)
 {
 	ThreeBestInsert * myBestInsert = &bestInsertClient[V->route->cour][U->cour];
@@ -603,7 +606,7 @@ double LocalSearch::getCheapestInsertSimultRemoval(Node * U, Node * V, Node *& b
 
 	return bestCost;
 }
-
+// 预处理路线R1中所有节点在路线R2中的插入成本
 void LocalSearch::preprocessInsertions(Route * R1, Route * R2)
 {
 	for (Node * U = R1->depot->next; !U->isDepot; U = U->next)
@@ -624,7 +627,7 @@ void LocalSearch::preprocessInsertions(Route * R1, Route * R2)
 		}
 	}
 }
-
+// 解决方案更新：在V之后插入U
 void LocalSearch::insertNode(Node * U, Node * V)
 {
 	U->prev->next = U->next;
@@ -635,7 +638,7 @@ void LocalSearch::insertNode(Node * U, Node * V)
 	V->next = U;
 	U->route = V->route;
 }
-
+// 解决方案更新：交换U和V
 void LocalSearch::swapNode(Node * U, Node * V)
 {
 	Node * myVPred = V->prev;
@@ -658,6 +661,115 @@ void LocalSearch::swapNode(Node * U, Node * V)
 	U->route = myRouteV;
 	V->route = myRouteU;
 }
+// 更新路线的预处理数据
+pair<vector<int>, double> LocalSearch::insertStationByRemove2(vector<int> route, Case& instance)
+{
+    list<pair<int, int>> stationInserted;
+    for (int i = 0; i < (int)route.size() - 1; i++) {
+        double allowedDis = instance.maxDis;
+        if (i != 0) {
+            allowedDis = instance.maxDis - instance.distances[stationInserted.back().second][route[i]];
+        }
+        int onestation = instance.findNearestStationFeasible(route[i], route[i + 1], allowedDis);
+        if (onestation == -1) return make_pair(route, -1);
+        stationInserted.push_back(make_pair(i, onestation));
+    }
+    /*for (int i = 0; i < (int)route.size() - 1; i++) {
+        stationInserted.push_back(make_pair(i, instance.bestStation[route[i]][route[i + 1]]));
+    }*/
+    while (!stationInserted.empty())
+    {
+        bool changed = false;
+        list<pair<int, int>>::iterator delone = stationInserted.begin();
+        double savedis = 0;
+        list<pair<int, int>>::iterator itr = stationInserted.begin();
+        list<pair<int, int>>::iterator next = itr;
+        next++;
+        if (next != stationInserted.end()) {
+            int endInd = next->first;
+            int endstation = next->second;
+            double sumdis = 0;
+            for (int i = 0; i < endInd; i++) {
+                sumdis += instance.distances[route[i]][route[i + 1]];
+            }
+            sumdis += instance.distances[route[endInd]][endstation];
+            if (sumdis <= instance.maxDis) {
+                savedis = instance.distances[route[itr->first]][itr->second] + instance.distances[itr->second][route[itr->first + 1]]
+                          - instance.distances[route[itr->first]][route[itr->first + 1]];
+            }
+        }
+        else {
+            double sumdis = 0;
+            for (int i = 0; i < (int)route.size() - 1; i++) {
+                sumdis += instance.distances[route[i]][route[i + 1]];
+            }
+            if (sumdis <= instance.maxDis) {
+                savedis = instance.distances[route[itr->first]][itr->second] + instance.distances[itr->second][route[itr->first + 1]]
+                          - instance.distances[route[itr->first]][route[itr->first + 1]];
+            }
+        }
+        itr++;
+        while (itr != stationInserted.end())
+        {
+            int startInd, endInd;
+            next = itr;
+            next++;
+            list<pair<int, int>>::iterator prev = itr;
+            prev--;
+            double sumdis = 0;
+            if (next != stationInserted.end()) {
+                startInd = prev->first + 1;
+                endInd = next->first;
+                sumdis += instance.distances[prev->second][route[startInd]];
+                for (int i = startInd; i < endInd; i++) {
+                    sumdis += instance.distances[route[i]][route[i + 1]];
+                }
+                sumdis += instance.distances[route[endInd]][next->second];
+                if (sumdis <= instance.maxDis) {
+                    double savedistemp = instance.distances[route[itr->first]][itr->second] + instance.distances[itr->second][route[itr->first + 1]]
+                                         - instance.distances[route[itr->first]][route[itr->first + 1]];
+                    if (savedistemp > savedis) {
+                        savedis = savedistemp;
+                        delone = itr;
+                    }
+                }
+            }
+            else {
+                startInd = prev->first + 1;
+                sumdis += instance.distances[prev->second][route[startInd]];
+                for (int i = startInd; i < (int)route.size() - 1; i++) {
+                    sumdis += instance.distances[route[i]][route[i + 1]];
+                }
+                if (sumdis <= instance.maxDis) {
+                    double savedistemp = instance.distances[route[itr->first]][itr->second] + instance.distances[itr->second][route[itr->first + 1]]
+                                         - instance.distances[route[itr->first]][route[itr->first + 1]];
+                    if (savedistemp > savedis) {
+                        savedis = savedistemp;
+                        delone = itr;
+                    }
+                }
+            }
+            itr++;
+        }
+        if (savedis != 0) {
+            stationInserted.erase(delone);
+            changed = true;
+        }
+        if (!changed) {
+            break;
+        }
+    }
+    while (!stationInserted.empty())
+    {
+        route.insert(route.begin() + stationInserted.back().first + 1, stationInserted.back().second);
+        stationInserted.pop_back();
+    }
+    double summ = 0;
+    for (int i = 0; i < (int)route.size() - 1; i++) {
+        summ += instance.distances[route[i]][route[i + 1]];
+    }
+    return make_pair(route, summ);
+}
 
 void LocalSearch::updateRouteData(Route * myRoute)
 {
@@ -667,7 +779,8 @@ void LocalSearch::updateRouteData(Route * myRoute)
 	double myReversalDistance = 0.;
 	double cumulatedX = 0.;
 	double cumulatedY = 0.;
-
+//修改的地方
+    vector<int> r2({0});
 	Node * mynode = myRoute->depot;
 	mynode->position = 0;
 	mynode->cumulatedLoad = 0.;
@@ -682,6 +795,7 @@ void LocalSearch::updateRouteData(Route * myRoute)
 		mynode->position = myplace;
 		myload += params.cli[mynode->cour].demand;
 		mytime += params.timeCost[mynode->prev->cour][mynode->cour] + params.cli[mynode->cour].serviceDuration;
+        r2.push_back(mynode->cour);//修改的地方
 		myReversalDistance += params.timeCost[mynode->cour][mynode->prev->cour] - params.timeCost[mynode->prev->cour][mynode->cour] ;
 		mynode->cumulatedLoad = myload;
 		mynode->cumulatedTime = mytime;
@@ -714,13 +828,30 @@ void LocalSearch::updateRouteData(Route * myRoute)
 		myRoute->polarAngleBarycenter = atan2(cumulatedY/(double)myRoute->nbCustomers - params.cli[0].coordY, cumulatedX/(double)myRoute->nbCustomers - params.cli[0].coordX);
 		emptyRoutes.erase(myRoute->cour);
 	}
+    myRoute->fit_charge=insertStationByRemove2(r2,params.c_evrp).second;//修改的地方
 }
 
+void LocalSearch::calRouteCharge(Route * myRoute)
+{
+    vector<int> r2({0});
+    Node * mynode = myRoute->depot;
+    bool firstIt = true;
+    while (!mynode->isDepot || firstIt)
+    {
+        mynode = mynode->next;
+        r2.push_back(mynode->cour);
+
+        firstIt = false;
+    }
+    myRoute->fit_charge=insertStationByRemove2(r2,params.c_evrp).second;
+
+}
+// 将解决方案加载到LS中
 void LocalSearch::loadIndividual(const Individual & indiv)
 {
 	emptyRoutes.clear();
 	nbMoves = 0; 
-	for (int r = 0; r < params.nbVehicles; r++)
+	for (int r = 0; r < params.nbVehicles; r++) //nbVeh是由系统决定一个足够大的值
 	{
 		Node * myDepot = &depots[r];
 		Node * myDepotFin = &depotsEnd[r];
@@ -758,7 +889,7 @@ void LocalSearch::loadIndividual(const Individual & indiv)
 	for (int i = 1; i <= params.nbClients; i++) // Initializing memory structures
 		clients[i].whenLastTestedRI = -1;
 }
-
+// 将LS解决方案导出到个体，并根据Params中的原始惩罚权重计算惩罚成本
 void LocalSearch::exportIndividual(Individual & indiv)
 {
 	std::vector < std::pair <double, int> > routePolarAngles ;
@@ -785,29 +916,35 @@ void LocalSearch::exportIndividual(Individual & indiv)
 
 LocalSearch::LocalSearch(Params & params) : params (params)
 {
-	clients = std::vector < Node >(params.nbClients + 1);
-	routes = std::vector < Route >(params.nbVehicles);
-	depots = std::vector < Node >(params.nbVehicles);
-	depotsEnd = std::vector < Node >(params.nbVehicles);
-	bestInsertClient = std::vector < std::vector <ThreeBestInsert> >(params.nbVehicles, std::vector <ThreeBestInsert>(params.nbClients + 1));
+	clients = std::vector < Node >(params.nbClients + 1);   // 客户+哨兵
+	routes = std::vector < Route >(params.nbVehicles);  // 表示路线的元素
+	depots = std::vector < Node >(params.nbVehicles);   // 表示仓库的元素
+	depotsEnd = std::vector < Node >(params.nbVehicles);// 复制仓库以标记路线的终点
+	bestInsertClient = std::vector < std::vector <ThreeBestInsert> >(params.nbVehicles, std::vector <ThreeBestInsert>(params.nbClients + 1));// (SWAP*) 对于每个路线和节点，存储最便宜的插入成本
 
 	for (int i = 0; i <= params.nbClients; i++) 
-	{ 
+	{
+        // 0是哨兵
 		clients[i].cour = i; 
 		clients[i].isDepot = false; 
 	}
 	for (int i = 0; i < params.nbVehicles; i++)
 	{
+        // 路径初始化
 		routes[i].cour = i;
 		routes[i].depot = &depots[i];
+        // 仓库节点初始化
 		depots[i].cour = 0;
 		depots[i].isDepot = true;
 		depots[i].route = &routes[i];
+
 		depotsEnd[i].cour = 0;
 		depotsEnd[i].isDepot = true;
 		depotsEnd[i].route = &routes[i];
 	}
+    // 加入客户节点
 	for (int i = 1 ; i <= params.nbClients ; i++) orderNodes.push_back(i);
+    // 加入路线
 	for (int r = 0 ; r < params.nbVehicles ; r++) orderRoutes.push_back(r);
 }
 

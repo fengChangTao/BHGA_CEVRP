@@ -11,6 +11,7 @@ using namespace std;
 
 int main(int argc, char *argv[])
 {
+    double scut_best=0;
 	try
 	{
 		// 读取程序参数
@@ -36,6 +37,7 @@ int main(int argc, char *argv[])
 		// 输出最优结果
 		if (solver.population.getBestFound() != NULL)
 		{
+            scut_best=solver.population.getBestFeasible()->eval.distance;
 			if (params.verbose) std::cout << "----- WRITING BEST SOLUTION IN : " << commandline.pathSolution << std::endl;
 			solver.population.exportCVRPLibFormat(*solver.population.getBestFound(),commandline.pathSolution);
 			solver.population.exportSearchProgress(commandline.pathSolution + ".PG.csv", commandline.pathInstance);
@@ -43,5 +45,5 @@ int main(int argc, char *argv[])
 	}
 	catch (const string& e) { std::cout << "EXCEPTION | " << e << std::endl; }
 	catch (const std::exception& e) { std::cout << "EXCEPTION | " << e.what() << std::endl; }
-	return 0;
+	return scut_best;
 }

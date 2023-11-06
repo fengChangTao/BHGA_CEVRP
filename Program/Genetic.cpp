@@ -37,8 +37,8 @@ void Genetic::run()
 			nbIterNonProd = 1;
 		}
 		
-		std::ofstream fengfile(params.s1 + ".dai.txt",std::ios::app);
-		fengfile<<nbIter<<" "<<population.getBestFeasible()->eval.distance<<std::endl;
+//		std::ofstream fengfile(params.s1 + ".dai.txt",std::ios::app);
+//		fengfile<<nbIter<<" "<<population.getBestFeasible()->eval.distance<<std::endl;
 		
 	}
 	if (params.verbose) std::cout << "----- GENETIC ALGORITHM FINISHED AFTER " << nbIter << " ITERATIONS. TIME SPENT: " << (double)(clock() - params.startTime) / (double)CLOCKS_PER_SEC << std::endl;

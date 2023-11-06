@@ -1,11 +1,11 @@
 #include "Split.h" 
-
+// 通用Split函数(测试无限车队，只有在没有产生可行的解决方案时，才运行有限车队的Split算法)
 void Split::generalSplit(Individual & indiv, int nbMaxVehicles)
 {
-	// Do not apply Split with fewer vehicles than the trivial (LP) bin packing bound
+	// 如果使用的车辆少于平凡（线性规划）装箱界限，则不应用分裂算法
 	maxVehicles = std::max<int>(nbMaxVehicles, std::ceil(params.totalDemand/params.vehicleCapacity));
 
-	// Initialization of the data structures for the linear split algorithms
+	// 从个体的染色体中获取客户信息，并存储到分裂算法的数据结构中
 	// Direct application of the code located at https://github.com/vidalt/Split-Library
 	for (int i = 1; i <= params.nbClients; i++)
 	{
@@ -20,11 +20,11 @@ void Split::generalSplit(Individual & indiv, int nbMaxVehicles)
 		sumDistance[i] = sumDistance[i - 1] + cliSplit[i - 1].dnext;
 	}
 
-	// We first try the simple split, and then the Split with limited fleet if this is not successful
+	// 首先尝试简单split，如果不成功，则尝试有限车队的split
 	if (splitSimple(indiv) == 0)
 		splitLF(indiv);
 
-	// Build up the rest of the Individual structure
+	// 构建个体结构的其余部分
 	indiv.evaluateCompleteCost(params);
 }
 

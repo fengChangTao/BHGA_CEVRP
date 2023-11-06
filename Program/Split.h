@@ -88,7 +88,7 @@ class Split
 
 public:
 
-  // General Split function (tests the unlimited fleet, and only if it does not produce a feasible solution, runs the Split algorithm for limited fleet)
+  // 通用Split函数(测试无限车队，只有在没有产生可行的解决方案时，才运行有限车队的Split算法)
   void generalSplit(Individual & indiv, int nbMaxVehicles);
 
   // Constructor

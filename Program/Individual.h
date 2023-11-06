@@ -35,9 +35,9 @@ class Individual
 {
 public:
 
-  EvalIndiv eval;															// 解决方案的成本参数
-  std::vector < int > chromT ;								// 表示个体的巨型旅行
-  std::vector < std::vector <int> > chromR ;	// 每个车辆的配送序列（完整解决方案）
+  EvalIndiv eval;										// 解决方案的成本参数
+  std::vector < int > chromT ;							// 表示个体的巨型旅行
+  std::vector < std::vector <int> > chromR ;	// 每辆车的配送序列（完整解决方案）
   std::vector < int > successors ;						// 解决方案中每个节点的后继（可以是仓库0）
   std::vector < int > predecessors ;					// 解决方案中每个节点的前驱（可以是仓库0）
   std::multiset < std::pair < double, Individual* > > indivsPerProximity ;	// 种群中的其他个体, 根据 proximity递增排序 (集合容器根据对的第一个值进行自然排序)

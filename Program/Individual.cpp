@@ -232,10 +232,10 @@ Individual::Individual(Params & params)
 {
 	successors = std::vector <int>(params.nbClients + 1);
 	predecessors = std::vector <int>(params.nbClients + 1);
-	chromR = std::vector < std::vector <int> >(params.nbVehicles);
-	chromT = std::vector <int>(params.nbClients);
+	chromR = std::vector < std::vector <int> >(params.nbVehicles);  //每辆车的配送序列
+	chromT = std::vector <int>(params.nbClients);   //基因序列
 	for (int i = 0; i < params.nbClients; i++) chromT[i] = i + 1;
-	std::shuffle(chromT.begin(), chromT.end(), params.ran);
+	std::shuffle(chromT.begin(), chromT.end(), params.ran); //打乱顺序
 	eval.penalizedCost = 1.e30;	
 }
 

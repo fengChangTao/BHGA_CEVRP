@@ -21,6 +21,8 @@ struct Route
 	double penalty;						// 当前的负载和持续时间惩罚的总和
 	double polarAngleBarycenter;		// 路线的质心的极角
 	CircleSector sector;				// 与客户集相关联的圆形区域
+
+    double fit_charge;
 };
 
 struct Node
@@ -100,10 +102,10 @@ private:
 	std::set < int > emptyRoutes;				// 所有空路线的索引
 	int loopID;									// 当前循环索引
 
-	/* 解决方案表示为元素的链表 */
+	/* 解决方案表示为元素的线性表 */
 	std::vector < Node > clients;				// 表示客户的元素（clients[0]是一个哨兵，不应访问）
 	std::vector < Node > depots;				// 表示仓库的元素
-	std::vector < Node > depotsEnd;				// Duplicate of the depots to mark the end of the routes
+	std::vector < Node > depotsEnd;				// 复制仓库以标记路线的终点
 	std::vector < Route > routes;				// 表示路线的元素
 	std::vector < std::vector < ThreeBestInsert > > bestInsertClient;   // (SWAP*) 对于每个路线和节点，存储最便宜的插入成本 
 
@@ -114,13 +116,13 @@ private:
 	Node * nodeX ;
     Node * nodeV ;
 	Node * nodeY ;
-	Route * routeU ;
-	Route * routeV ;
-	int nodeUPrevIndex, nodeUIndex, nodeXIndex, nodeXNextIndex ;	
-	int nodeVPrevIndex, nodeVIndex, nodeYIndex, nodeYNextIndex ;	
+	Route * routeU ;    // u所在的路径
+	Route * routeV ;    // v所在的路径
+	int nodeUPrevIndex, nodeUIndex, nodeXIndex, nodeXNextIndex ;	//u前，u，x，x后的节点索引
+	int nodeVPrevIndex, nodeVIndex, nodeYIndex, nodeYNextIndex ;	//v前，v，y，y后的节点索引
 	double loadU, loadX, loadV, loadY;
 	double serviceU, serviceX, serviceV, serviceY;
-	double penaltyCapacityLS, penaltyDurationLS ;
+	double penaltyCapacityLS, penaltyDurationLS ;   // 容量惩罚和持续时间惩罚
 	bool intraRouteMove ; // 是否路径内移动
 
 	void setLocalVariablesRouteU(); // 初始化一些与routeU相关的本地变量和距离，以避免在距离矩阵中总是查询相同的值
@@ -155,16 +157,21 @@ private:
 	static void swapNode(Node * U, Node * V) ;		// 解决方案更新：交换U和V							   
 	void updateRouteData(Route * myRoute);			// 更新路线的预处理数据
 
-	public:
+    static pair<vector<int>, double> insertStationByRemove2(vector<int> route, Case& instance);
+    void calRouteCharge(Route * myRoute);
 
-	// 使用指定的惩罚值运行局部搜索
+public:
+
+	// 使用指定的惩罚值运行LS
 	void run(Individual & indiv, double penaltyCapacityLS, double penaltyDurationLS);
 
-	// 将初始解决方案加载到局部搜索中
+	// 将解决方案加载到LS中
 	void loadIndividual(const Individual & indiv);
 
 	// 将LS解决方案导出到个体，并根据Params中的原始惩罚权重计算惩罚成本
 	void exportIndividual(Individual & indiv);
+
+
 
 	// 构造函数
 	LocalSearch(Params & params);
