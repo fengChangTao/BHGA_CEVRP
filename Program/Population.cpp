@@ -15,6 +15,7 @@ void Population::generatePopulation()
 			if (randomIndiv.eval.isFeasible) addIndividual(randomIndiv, false);
 		}
 	}
+    params.isChu=false;
 }
 
 // 在种群中添加个体（当种群达到最大大小时，自动触发生存者选择）

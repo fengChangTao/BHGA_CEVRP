@@ -143,10 +143,33 @@ bool LocalSearch::move1()
 			- routeV->penalty;
 	}
 
+//    if(dis3(params.ran)>gai)
+//        goto F1;
 	if (costSuppU + costSuppV > -MY_EPSILON) return false;  // 如果VRP路径变长了
+    F1:
 	if (nodeUIndex == nodeYIndex) return false; // 如果u本来就在v后面了
 
-    calRouteCharge(routeU);
+
+    vector<int> R_u=routeU->rrr;
+    vector<int> R_v=routeV->rrr;
+    if(!intraRouteMove)
+    {
+        remove_f3(R_u,{nodeUIndex});
+        add_f3(R_v,{nodeUIndex},nodeVIndex);
+        double dian2=insertStationByRemove2(R_u,params.c_evrp).second;
+        double dian3=insertStationByRemove2(R_v,params.c_evrp).second;
+
+        if((dian2+dian3-routeU->fit_charge-routeV->fit_charge)>-MY_EPSILON)
+            return false;
+    }
+    else
+    {
+        remove_f3(R_u,{nodeUIndex});
+        add_f3(R_u,{nodeUIndex},nodeVIndex);
+        double dian4=insertStationByRemove2(R_u,params.c_evrp).second;
+        if((dian4-routeU->fit_charge)>-MY_EPSILON)
+            return false;
+    }
 
     // 这里是已经决定更改了
 	insertNode(nodeU, nodeV);   // 更改"受影响节点"的前后指针
@@ -317,9 +340,25 @@ bool LocalSearch::move7()
 
 	double cost = params.timeCost[nodeUIndex][nodeVIndex] + params.timeCost[nodeXIndex][nodeYIndex] - params.timeCost[nodeUIndex][nodeXIndex] - params.timeCost[nodeVIndex][nodeYIndex] + nodeV->cumulatedReversalDistance - nodeX->cumulatedReversalDistance;
 
-	if (cost > -MY_EPSILON) return false;
+	if (cost > -MY_EPSILON&&params.isChu==true) return false;
+
 	if (nodeU->next == nodeV) return false;
 
+    if(params.isChu==false)
+    {
+        auto R_u=routeU->rrr;
+        int u=nodeUIndex,v=nodeVIndex;
+
+        auto it_u = find(R_u.begin(), R_u.end(), u);
+        auto it_v = find(R_u.begin(), R_u.end(), v);
+        if (it_u<it_v)
+            std::reverse(it_u, it_v + 1);
+        else
+            return false;
+        double dian2=insertStationByRemove2(R_u,params.c_evrp).second;
+        if(dian2-(routeU->fit_charge)>-MY_EPSILON)
+            return false;
+    }
 	Node * nodeNum = nodeX->next;
 	nodeX->prev = nodeNum;
 	nodeX->next = nodeY;
@@ -661,6 +700,33 @@ void LocalSearch::swapNode(Node * U, Node * V)
 	U->route = myRouteV;
 	V->route = myRouteU;
 }
+
+
+//在vector中移除一些元素
+void LocalSearch::remove_f3(vector<int>& g, vector<int> del)
+{
+    for (auto h : del)
+    {
+        auto it2 = find(g.begin(), g.end(), h);
+        if (it2 != g.end())
+        {
+            g.erase(it2);
+        }
+    }
+}
+//在vector中的某位置pos后加入一些元素
+void LocalSearch::add_f3(vector<int>& g, vector<int> add, int after)
+{
+    auto it2 = find(g.begin(), g.end(), after);
+    if (it2 != g.end())
+    {
+        g.insert(it2 + 1, add.begin(), add.end());
+
+    }
+
+
+}
+
 // 更新路线的预处理数据
 pair<vector<int>, double> LocalSearch::insertStationByRemove2(vector<int> route, Case& instance)
 {
@@ -828,7 +894,12 @@ void LocalSearch::updateRouteData(Route * myRoute)
 		myRoute->polarAngleBarycenter = atan2(cumulatedY/(double)myRoute->nbCustomers - params.cli[0].coordY, cumulatedX/(double)myRoute->nbCustomers - params.cli[0].coordX);
 		emptyRoutes.erase(myRoute->cour);
 	}
-    myRoute->fit_charge=insertStationByRemove2(r2,params.c_evrp).second;//修改的地方
+    //修改的地方
+    myRoute->rrr=r2;
+    if(r2.size()<=2)
+        myRoute->fit_charge=INT_MAX;
+    else
+        myRoute->fit_charge=insertStationByRemove2(r2,params.c_evrp).second;//修改的地方
 }
 
 void LocalSearch::calRouteCharge(Route * myRoute)
@@ -914,7 +985,7 @@ void LocalSearch::exportIndividual(Individual & indiv)
 	indiv.evaluateCompleteCost(params);
 }
 
-LocalSearch::LocalSearch(Params & params) : params (params)
+LocalSearch::LocalSearch(Params & params) : params (params),dis3(0,1)
 {
 	clients = std::vector < Node >(params.nbClients + 1);   // 客户+哨兵
 	routes = std::vector < Route >(params.nbVehicles);  // 表示路线的元素

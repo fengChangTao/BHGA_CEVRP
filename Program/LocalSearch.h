@@ -22,6 +22,7 @@ struct Route
 	double polarAngleBarycenter;		// 路线的质心的极角
 	CircleSector sector;				// 与客户集相关联的圆形区域
 
+    vector<int> rrr;
     double fit_charge;
 };
 
@@ -101,6 +102,7 @@ private:
 	std::vector < int > orderRoutes;			// 在SWAP*本地搜索中检查路线的随机顺序
 	std::set < int > emptyRoutes;				// 所有空路线的索引
 	int loopID;									// 当前循环索引
+    double gai=0.618;
 
 	/* 解决方案表示为元素的线性表 */
 	std::vector < Node > clients;				// 表示客户的元素（clients[0]是一个哨兵，不应访问）
@@ -156,6 +158,8 @@ private:
 	static void insertNode(Node * U, Node * V);		// 解决方案更新：在V之后插入U
 	static void swapNode(Node * U, Node * V) ;		// 解决方案更新：交换U和V							   
 	void updateRouteData(Route * myRoute);			// 更新路线的预处理数据
+    static void remove_f3(vector<int>& g, vector<int> del);
+    static void add_f3(vector<int>& g, vector<int> add, int after);
 
     static pair<vector<int>, double> insertStationByRemove2(vector<int> route, Case& instance);
     void calRouteCharge(Route * myRoute);
@@ -171,6 +175,7 @@ public:
 	// 将LS解决方案导出到个体，并根据Params中的原始惩罚权重计算惩罚成本
 	void exportIndividual(Individual & indiv);
 
+    std::uniform_real_distribution<double> dis3;
 
 
 	// 构造函数

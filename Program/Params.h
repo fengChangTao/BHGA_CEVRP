@@ -36,6 +36,7 @@ class Params
 {
 public:
 
+    bool isChu=true;
 	/* 遗传算法参数 */
 	bool verbose;                       // 控制日志的详细级别，在迭代过程中
 	AlgorithmParameters ap;	            // HGS算法的主要参数
