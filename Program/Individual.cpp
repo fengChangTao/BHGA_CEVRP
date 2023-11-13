@@ -18,7 +18,7 @@ pair<vector<int>, double> insertStationByRemove(vector<int> route, Case& instanc
 			allowedDis = instance.maxDis - instance.distances[stationInserted.back().second][route[i]];
 		}
 		int onestation = instance.findNearestStationFeasible(route[i], route[i + 1], allowedDis);
-		if (onestation == -1) return make_pair(route, -1);
+		if (onestation == -1) return make_pair(route, INT_MAX);
 		stationInserted.push_back(make_pair(i, onestation));
 	}
 	/*for (int i = 0; i < (int)route.size() - 1; i++) {

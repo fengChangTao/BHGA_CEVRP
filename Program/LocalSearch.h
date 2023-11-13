@@ -50,6 +50,8 @@ struct ThreeBestInsert
 
 	void compareAndAdd(double costInsert, Node * placeInsert)
 	{
+        // 如果提供的插入成本小于当前记录的任何一个最佳成本，更新相应的成本和位置。
+        // 此函数用于在评估插入点时动态更新最佳插入位置。
 		if (costInsert >= bestCost[2]) return;
 		else if (costInsert >= bestCost[1])
 		{
@@ -71,6 +73,8 @@ struct ThreeBestInsert
 	// 重置结构（没有计算插入）
 	void reset()
 	{
+        // 重置结构，清除所有已记录的最佳插入位置和成本。
+        // 通常在新的评估周期开始时调用此方法。
 		bestCost[0] = 1.e30; bestLocation[0] = NULL;
 		bestCost[1] = 1.e30; bestLocation[1] = NULL;
 		bestCost[2] = 1.e30; bestLocation[2] = NULL;
@@ -82,11 +86,11 @@ struct ThreeBestInsert
 // 用于追踪最佳SWAP*移动的结构
 struct SwapStarElement
 {
-	double moveCost = 1.e30 ;
+	double moveCost = 1.e30 ;       // 移动的成本
 	Node * U = NULL ;
-	Node * bestPositionU = NULL;
+	Node * bestPositionU = NULL;    // U节点在另一路线中的最佳重新插入位置。
 	Node * V = NULL;
-	Node * bestPositionV = NULL;
+	Node * bestPositionV = NULL;    // V节点在另一路线中的最佳重新插入位置。
 };
 
 // 主要局部搜索结构
@@ -102,7 +106,7 @@ private:
 	std::vector < int > orderRoutes;			// 在SWAP*本地搜索中检查路线的随机顺序
 	std::set < int > emptyRoutes;				// 所有空路线的索引
 	int loopID;									// 当前循环索引
-    double gai=0.618;
+
 
 	/* 解决方案表示为元素的线性表 */
 	std::vector < Node > clients;				// 表示客户的元素（clients[0]是一个哨兵，不应访问）
@@ -114,10 +118,15 @@ private:
 	/* 本地搜索循环中使用的临时变量 */
 	// nodeUPrev -> nodeU -> nodeX -> nodeXNext
 	// nodeVPrev -> nodeV -> nodeY -> nodeYNext
+    Node * nodeUp;
 	Node * nodeU ;
 	Node * nodeX ;
+    Node * nodeXn;
+
+    Node * nodeVp;
     Node * nodeV ;
 	Node * nodeY ;
+    Node * nodeYn;
 	Route * routeU ;    // u所在的路径
 	Route * routeV ;    // v所在的路径
 	int nodeUPrevIndex, nodeUIndex, nodeXIndex, nodeXNextIndex ;	//u前，u，x，x后的节点索引
@@ -149,9 +158,9 @@ private:
 	bool move8(); // If route(U) != route(V), replace (U,X) and (V,Y) by (U,V) and (X,Y)
 	bool move9(); // If route(U) != route(V), replace (U,X) and (V,Y) by (U,Y) and (V,X)
 
-	/* 用于有效交换评估的子程序 */
-	bool swapStar(); // 计算路线U和路线V之间的所有SWAP*，并应用最佳改进移动
-	double getCheapestInsertSimultRemoval(Node * U, Node * V, Node *& bestPosition); // 计算V在路线中的插入成本和位置，其中V被省略
+	/* 用于高效SWAP*评估的子程序 */
+	bool swapStar(); // 计算路线U和路线V之间的所有SWAP*移动，并应用最佳改进移动
+	double getCheapestInsertSimultRemoval(Node * U, Node * V, Node *& bestPosition); // 计算V所在路线中的插入成本和位置，其中V被省略
 	void preprocessInsertions(Route * R1, Route * R2); // 预处理路线R1中所有节点在路线R2中的插入成本
 
 	/* ROUTINES TO UPDATE THE SOLUTIONS */
@@ -160,9 +169,10 @@ private:
 	void updateRouteData(Route * myRoute);			// 更新路线的预处理数据
     static void remove_f3(vector<int>& g, vector<int> del);
     static void add_f3(vector<int>& g, vector<int> add, int after);
-
+    static bool isEqual(const std::vector<int>& v1, const std::vector<int>& v2);
     static pair<vector<int>, double> insertStationByRemove2(vector<int> route, Case& instance);
-    void calRouteCharge(Route * myRoute);
+    double calRouteCharge(Route * myRoute);
+    vector<int> seeRoute(Route * myRoute);
 
 public:
 
@@ -176,7 +186,8 @@ public:
 	void exportIndividual(Individual & indiv);
 
     std::uniform_real_distribution<double> dis3;
-
+    bool yuC=false;
+    bool yu2=true;
 
 	// 构造函数
 	LocalSearch(Params & params);

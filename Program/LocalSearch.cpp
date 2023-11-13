@@ -98,7 +98,9 @@ void LocalSearch::run(Individual & indiv, double penaltyCapacityLS, double penal
 void LocalSearch::setLocalVariablesRouteU()
 {
 	routeU = nodeU->route;
+    nodeUp = nodeU->prev;
 	nodeX = nodeU->next;
+    nodeXn = nodeX->next;
 	nodeXNextIndex = nodeX->next->cour;
 	nodeUIndex = nodeU->cour;
 	nodeUPrevIndex = nodeU->prev->cour;
@@ -112,7 +114,9 @@ void LocalSearch::setLocalVariablesRouteU()
 void LocalSearch::setLocalVariablesRouteV()
 {
 	routeV = nodeV->route;
+    nodeVp = nodeV->prev;
 	nodeY = nodeV->next;
+    nodeYn = nodeY->next;
 	nodeYNextIndex = nodeY->next->cour;
 	nodeVIndex = nodeV->cour;
 	nodeVPrevIndex = nodeV->prev->cour;
@@ -142,37 +146,75 @@ bool LocalSearch::move1()
 			+ penaltyExcessLoad(routeV->load + loadU)
 			- routeV->penalty;
 	}
-
-//    if(dis3(params.ran)>gai)
-//        goto F1;
+ 
 	if (costSuppU + costSuppV > -MY_EPSILON) return false;  // 如果VRP路径变长了
-    F1:
+ 
 	if (nodeUIndex == nodeYIndex) return false; // 如果u本来就在v后面了
-
-
-    vector<int> R_u=routeU->rrr;
-    vector<int> R_v=routeV->rrr;
-    if(!intraRouteMove)
+    
+    if(yuC)
     {
-        remove_f3(R_u,{nodeUIndex});
-        add_f3(R_v,{nodeUIndex},nodeVIndex);
-        double dian2=insertStationByRemove2(R_u,params.c_evrp).second;
-        double dian3=insertStationByRemove2(R_v,params.c_evrp).second;
+        vector<int> R_u=routeU->rrr;
+        vector<int> R_v=routeV->rrr;
+        if(!intraRouteMove)
+        {
+            remove_f3(R_u,{nodeUIndex});
+            add_f3(R_v,{nodeUIndex},nodeVIndex);
+            double dian2=insertStationByRemove2(R_u,params.c_evrp).second;
+            double dian3=insertStationByRemove2(R_v,params.c_evrp).second;
 
-        if((dian2+dian3-routeU->fit_charge-routeV->fit_charge)>-MY_EPSILON)
-            return false;
+            if((dian2+dian3-routeU->fit_charge-routeV->fit_charge)>-MY_EPSILON)
+                return false;
+        }
+        else
+        {
+            remove_f3(R_u,{nodeUIndex});
+            add_f3(R_u,{nodeUIndex},nodeVIndex);
+            double dian4=insertStationByRemove2(R_u,params.c_evrp).second;
+            if((dian4-routeU->fit_charge)>-MY_EPSILON)
+                return false;
+        }
     }
-    else
-    {
-        remove_f3(R_u,{nodeUIndex});
-        add_f3(R_u,{nodeUIndex},nodeVIndex);
-        double dian4=insertStationByRemove2(R_u,params.c_evrp).second;
-        if((dian4-routeU->fit_charge)>-MY_EPSILON)
-            return false;
-    }
-
+    
+    auto r5=seeRoute(routeU);
+    auto r6=seeRoute(routeV);
     // 这里是已经决定更改了
 	insertNode(nodeU, nodeV);   // 更改"受影响节点"的前后指针
+    auto r7=seeRoute(routeU);
+    auto r8=seeRoute(routeV);
+    if(yu2)
+    {
+        if(!intraRouteMove)
+        {
+            double dian2= calRouteCharge(routeU);
+            double dian3= calRouteCharge(routeV);
+            if((dian2+dian3-routeU->fit_charge-routeV->fit_charge)>-MY_EPSILON)
+            {
+                insertNode(nodeU,nodeUp);
+                auto r9=seeRoute(routeU);
+                auto r10=seeRoute(routeV);
+                if(isEqual(r5,r9)==false||isEqual(r6,r10)==false)
+                {
+                    cout<<endl<<"错错错，是我的错"<<endl;
+                }
+                return false;
+            }
+        }
+        else
+        {
+            double dian4=calRouteCharge(routeU);
+            if((dian4-routeU->fit_charge)>-MY_EPSILON)
+            {
+                insertNode(nodeU,nodeUp);
+                auto r11=seeRoute(routeU);
+                if(isEqual(r5,r11)==false)
+                {
+                    cout<<endl<<"错错错，是我的错"<<endl;
+                }
+                return false;
+            }
+        }
+    
+    }
 	nbMoves++; // Increment move counter before updating route data
 	searchCompleted = false;
 	updateRouteData(routeU);
@@ -202,8 +244,71 @@ bool LocalSearch::move2()
 	if (costSuppU + costSuppV > -MY_EPSILON) return false;
 	if (nodeU == nodeY || nodeV == nodeX || nodeX->isDepot) return false;
 
+    if(yuC)
+    {
+        vector<int> R_u=routeU->rrr;
+        vector<int> R_v=routeV->rrr;
+        if(!intraRouteMove)
+        {
+            remove_f3(R_u,{nodeUIndex,nodeXIndex});
+            add_f3(R_v,{nodeUIndex,nodeXIndex},nodeVIndex);
+            double dian2=insertStationByRemove2(R_u,params.c_evrp).second;
+            double dian3=insertStationByRemove2(R_v,params.c_evrp).second;
+
+            if((dian2+dian3-routeU->fit_charge-routeV->fit_charge)>-MY_EPSILON)
+                return false;
+        }
+        else
+        {
+            remove_f3(R_u,{nodeUIndex,nodeXIndex});
+            add_f3(R_u,{nodeUIndex,nodeXIndex},nodeVIndex);
+            double dian4=insertStationByRemove2(R_u,params.c_evrp).second;
+            if((dian4-routeU->fit_charge)>-MY_EPSILON)
+                return false;
+        }
+    }
+    
+    auto r5=seeRoute(routeU);
+    auto r6=seeRoute(routeV);
 	insertNode(nodeU, nodeV);
 	insertNode(nodeX, nodeU);
+    auto r7=seeRoute(routeU);
+    auto r8=seeRoute(routeV);
+    if(yu2)
+    {
+        if(!intraRouteMove)
+        {
+            double dian2= calRouteCharge(routeU);
+            double dian3= calRouteCharge(routeV);
+            if((dian2+dian3-routeU->fit_charge-routeV->fit_charge)>-MY_EPSILON)
+            {
+                insertNode(nodeU,nodeUp);
+                insertNode(nodeX,nodeU);
+                auto r9=seeRoute(routeU);
+                auto r10=seeRoute(routeV);
+                if(isEqual(r5,r9)==false||isEqual(r6,r10)==false)
+                {
+                    cout<<endl<<"错错错，是我的错"<<endl;
+                }
+                return false;
+            }
+        }
+        else
+        {
+            double dian4=calRouteCharge(routeU);
+            if((dian4-routeU->fit_charge)>-MY_EPSILON)
+            {
+                insertNode(nodeU,nodeUp);
+                insertNode(nodeX,nodeU);
+                auto r11=seeRoute(routeU);
+                if(isEqual(r5,r11)==false)
+                {
+                    cout<<endl<<"错错错，是我的错"<<endl;
+                }
+                return false;
+            }
+        }
+    }
 	nbMoves++; // Increment move counter before updating route data
 	searchCompleted = false;
 	updateRouteData(routeU);
@@ -233,8 +338,71 @@ bool LocalSearch::move3()
 	if (costSuppU + costSuppV > -MY_EPSILON) return false;
 	if (nodeU == nodeY || nodeX == nodeV || nodeX->isDepot) return false;
 
+    if(yuC)
+    {
+        vector<int> R_u=routeU->rrr;
+        vector<int> R_v=routeV->rrr;
+        if(!intraRouteMove)
+        {
+            remove_f3(R_u,{nodeUIndex,nodeXIndex});
+            add_f3(R_v,{nodeXIndex,nodeUIndex},nodeVIndex);
+            double dian2=insertStationByRemove2(R_u,params.c_evrp).second;
+            double dian3=insertStationByRemove2(R_v,params.c_evrp).second;
+
+            if((dian2+dian3-routeU->fit_charge-routeV->fit_charge)>-MY_EPSILON)
+                return false;
+        }
+        else
+        {
+            remove_f3(R_u,{nodeUIndex,nodeXIndex});
+            add_f3(R_u,{nodeXIndex,nodeUIndex},nodeVIndex);
+            double dian4=insertStationByRemove2(R_u,params.c_evrp).second;
+            if((dian4-routeU->fit_charge)>-MY_EPSILON)
+                return false;
+        }
+    }
+    
+    auto r5=seeRoute(routeU);
+    auto r6=seeRoute(routeV);
 	insertNode(nodeX, nodeV);
 	insertNode(nodeU, nodeX);
+    auto r7=seeRoute(routeU);
+    auto r8=seeRoute(routeV);
+    if(yu2)
+    {
+        if(!intraRouteMove)
+        {
+            double dian2= calRouteCharge(routeU);
+            double dian3= calRouteCharge(routeV);
+            if((dian2+dian3-routeU->fit_charge-routeV->fit_charge)>-MY_EPSILON)
+            {
+                insertNode(nodeU,nodeUp);
+                insertNode(nodeX,nodeU);
+                auto r9=seeRoute(routeU);
+                auto r10=seeRoute(routeV);
+                if(isEqual(r5,r9)==false||isEqual(r6,r10)==false)
+                {
+                    cout<<endl<<"错错错，是我的错"<<endl;
+                }
+                return false;
+            }
+        }
+        else
+        {
+            double dian4=calRouteCharge(routeU);
+            if((dian4-routeU->fit_charge)>-MY_EPSILON)
+            {
+                insertNode(nodeU,nodeUp);
+                insertNode(nodeX,nodeU);
+                auto r11=seeRoute(routeU);
+                if(isEqual(r5,r11)==false)
+                {
+                    cout<<endl<<"错错错，是我的错"<<endl;
+                }
+                return false;
+            }
+        }
+    }
 	nbMoves++; // Increment move counter before updating route data
 	searchCompleted = false;
 	updateRouteData(routeU);
@@ -264,7 +432,69 @@ bool LocalSearch::move4()
 	if (costSuppU + costSuppV > -MY_EPSILON) return false;
 	if (nodeUIndex == nodeVPrevIndex || nodeUIndex == nodeYIndex) return false;
 
+    if(yuC)
+    {
+        vector<int> R_u=routeU->rrr;
+        vector<int> R_v=routeV->rrr;
+        if(!intraRouteMove)
+        {
+            auto it_u = find(R_u.begin(), R_u.end(), nodeUIndex);
+            auto it_v = find(R_v.begin(), R_v.end(), nodeVIndex);
+            iter_swap(it_u, it_v);
+            double dian2=insertStationByRemove2(R_u,params.c_evrp).second;
+            double dian3=insertStationByRemove2(R_v,params.c_evrp).second;
+            if((dian2+dian3-routeU->fit_charge-routeV->fit_charge)>-MY_EPSILON)
+                return false;
+        }
+        else
+        {
+            auto it_u = find(R_u.begin(), R_u.end(), nodeUIndex);
+            auto it_v = find(R_u.begin(), R_u.end(), nodeVIndex);
+            iter_swap(it_u, it_v);
+            double dian4=insertStationByRemove2(R_u,params.c_evrp).second;
+            if((dian4-routeU->fit_charge)>-MY_EPSILON)
+                return false;;
+        }
+    }
+    
+    auto r5=seeRoute(routeU);
+    auto r6=seeRoute(routeV);
 	swapNode(nodeU, nodeV);
+    auto r7=seeRoute(routeU);
+    auto r8=seeRoute(routeV);
+    if(yu2)
+    {
+        if(!intraRouteMove)
+        {
+            double dian2= calRouteCharge(routeU);
+            double dian3= calRouteCharge(routeV);
+            if((dian2+dian3-routeU->fit_charge-routeV->fit_charge)>-MY_EPSILON)
+            {
+                swapNode(nodeU, nodeV);
+                auto r9=seeRoute(routeU);
+                auto r10=seeRoute(routeV);
+                if(isEqual(r5,r9)==false||isEqual(r6,r10)==false)
+                {
+                    cout<<endl<<"错错错，是我的错"<<endl;
+                }
+                return false;
+            }
+        }
+        else
+        {
+            double dian4=calRouteCharge(routeU);
+            if((dian4-routeU->fit_charge)>-MY_EPSILON)
+            {
+                swapNode(nodeU, nodeV);
+                auto r11=seeRoute(routeU);
+                if(isEqual(r5,r11)==false)
+                {
+                    cout<<endl<<"错错错，是我的错"<<endl;
+                }
+                return false;
+            }
+        }
+    }
 	nbMoves++; // Increment move counter before updating route data
 	searchCompleted = false;
 	updateRouteData(routeU);
@@ -294,8 +524,78 @@ bool LocalSearch::move5()
 	if (costSuppU + costSuppV > -MY_EPSILON) return false;
 	if (nodeU == nodeV->prev || nodeX == nodeV->prev || nodeU == nodeY || nodeX->isDepot) return false;
 
+    if(yuC)
+    {
+        vector<int> R_u=routeU->rrr;
+        vector<int> R_v=routeV->rrr;
+        if(!intraRouteMove)
+        {
+            auto it_u = find(R_u.begin(), R_u.end(), nodeUIndex);
+            auto it_v = find(R_v.begin(), R_v.end(), nodeVIndex);
+            iter_swap(it_u, it_v);
+            remove_f3(R_u, { nodeXIndex });
+            add_f3(R_v,{ nodeXIndex },nodeUIndex);
+
+            double dian2=insertStationByRemove2(R_u,params.c_evrp).second;
+            double dian3=insertStationByRemove2(R_v,params.c_evrp).second;
+            if((dian2+dian3-routeU->fit_charge-routeV->fit_charge)>-MY_EPSILON)
+                return false;
+        }
+        else
+        {
+            auto it_u = find(R_u.begin(), R_u.end(), nodeUIndex);
+            auto it_v = find(R_u.begin(), R_u.end(), nodeVIndex);
+            iter_swap(it_u, it_v);
+            remove_f3(R_u, { nodeXIndex });
+            add_f3(R_u,{ nodeXIndex },nodeUIndex);
+            double dian4=insertStationByRemove2(R_u,params.c_evrp).second;
+            if((dian4-routeU->fit_charge)>-MY_EPSILON)
+                return false;;
+        }
+    }
+    auto r5=seeRoute(routeU);
+    auto r6=seeRoute(routeV);
 	swapNode(nodeU, nodeV);
 	insertNode(nodeX, nodeU);
+    
+    auto r7=seeRoute(routeU);
+    auto r8=seeRoute(routeV);
+    if(yu2)
+    {
+        if(!intraRouteMove)
+        {
+            double dian2= calRouteCharge(routeU);
+            double dian3= calRouteCharge(routeV);
+            if((dian2+dian3-routeU->fit_charge-routeV->fit_charge)>-MY_EPSILON)
+            {
+                swapNode(nodeU, nodeV);
+                insertNode(nodeX, nodeU);
+                auto r9=seeRoute(routeU);
+                auto r10=seeRoute(routeV);
+                if(isEqual(r5,r9)==false||isEqual(r6,r10)==false)
+                {
+                    cout<<endl<<"错错错，是我的错"<<endl;
+                }
+                return false;
+            }
+        }
+        else
+        {
+            double dian4=calRouteCharge(routeU);
+            if((dian4-routeU->fit_charge)>-MY_EPSILON)
+            {
+                swapNode(nodeU, nodeV);
+                insertNode(nodeX, nodeU);
+                auto r11=seeRoute(routeU);
+                if(isEqual(r5,r11)==false)
+                {
+                    cout<<endl<<"错错错，是我的错"<<endl;
+                }
+                return false;
+            }
+        }
+    }
+    
 	nbMoves++; // Increment move counter before updating route data
 	searchCompleted = false;
 	updateRouteData(routeU);
@@ -325,8 +625,78 @@ bool LocalSearch::move6()
 	if (costSuppU + costSuppV > -MY_EPSILON) return false;
 	if (nodeX->isDepot || nodeY->isDepot || nodeY == nodeU->prev || nodeU == nodeY || nodeX == nodeV || nodeV == nodeX->next) return false;
 
-	swapNode(nodeU, nodeV);
+    if(yuC)
+    {
+        vector<int> R_u=routeU->rrr;
+        vector<int> R_v=routeV->rrr;
+        if(!intraRouteMove)
+        {
+            auto it_u = find(R_u.begin(), R_u.end(), nodeUIndex);
+            auto it_v = find(R_v.begin(), R_v.end(), nodeVIndex);
+            auto it_x=find(R_u.begin(), R_u.end(), nodeXIndex);
+            auto it_y = find(R_v.begin(), R_v.end(), nodeYIndex);
+            iter_swap(it_u, it_v);
+            iter_swap(it_x,it_y);
+            double dian2=insertStationByRemove2(R_u,params.c_evrp).second;
+            double dian3=insertStationByRemove2(R_v,params.c_evrp).second;
+            if((dian2+dian3-routeU->fit_charge-routeV->fit_charge)>-MY_EPSILON)
+                return false;
+        }
+        else
+        {
+            auto it_u = find(R_u.begin(), R_u.end(), nodeUIndex);
+            auto it_v = find(R_u.begin(), R_u.end(), nodeVIndex);
+            auto it_x=find(R_u.begin(), R_u.end(), nodeXIndex);
+            auto it_y = find(R_u.begin(), R_u.end(), nodeYIndex);
+            iter_swap(it_u, it_v);
+            iter_swap(it_x,it_y);
+            double dian4=insertStationByRemove2(R_u,params.c_evrp).second;
+            if((dian4-routeU->fit_charge)>-MY_EPSILON)
+                return false;;
+        }
+    }
+    
+    auto r5=seeRoute(routeU);
+    auto r6=seeRoute(routeV);
+    swapNode(nodeU, nodeV);
 	swapNode(nodeX, nodeY);
+    auto r7=seeRoute(routeU);
+    auto r8=seeRoute(routeV);
+    if(yu2)
+    {
+        if(!intraRouteMove)
+        {
+            double dian2= calRouteCharge(routeU);
+            double dian3= calRouteCharge(routeV);
+            if((dian2+dian3-routeU->fit_charge-routeV->fit_charge)>-MY_EPSILON)
+            {
+                swapNode(nodeU, nodeV);
+                swapNode(nodeX, nodeY);
+                auto r9=seeRoute(routeU);
+                auto r10=seeRoute(routeV);
+                if(isEqual(r5,r9)==false||isEqual(r6,r10)==false)
+                {
+                    cout<<endl<<"错错错，是我的错"<<endl;
+                }
+                return false;
+            }
+        }
+        else
+        {
+            double dian4=calRouteCharge(routeU);
+            if((dian4-routeU->fit_charge)>-MY_EPSILON)
+            {
+                swapNode(nodeU, nodeV);
+                swapNode(nodeX, nodeY);
+                auto r11=seeRoute(routeU);
+                if(isEqual(r5,r11)==false)
+                {
+                    cout<<endl<<"错错错，是我的错"<<endl;
+                }
+                return false;
+            }
+        }
+    }
 	nbMoves++; // Increment move counter before updating route data
 	searchCompleted = false;
 	updateRouteData(routeU);
@@ -340,29 +710,34 @@ bool LocalSearch::move7()
 
 	double cost = params.timeCost[nodeUIndex][nodeVIndex] + params.timeCost[nodeXIndex][nodeYIndex] - params.timeCost[nodeUIndex][nodeXIndex] - params.timeCost[nodeVIndex][nodeYIndex] + nodeV->cumulatedReversalDistance - nodeX->cumulatedReversalDistance;
 
-	if (cost > -MY_EPSILON&&params.isChu==true) return false;
+	if (cost > -MY_EPSILON) return false;
 
 	if (nodeU->next == nodeV) return false;
-
-    if(params.isChu==false)
+    
+    auto R_u=routeU->rrr;
+    if(yu2)
     {
-        auto R_u=routeU->rrr;
-        int u=nodeUIndex,v=nodeVIndex;
+        
+        int lhand=nodeXIndex,rhand=nodeVIndex;
 
-        auto it_u = find(R_u.begin(), R_u.end(), u);
-        auto it_v = find(R_u.begin(), R_u.end(), v);
-        if (it_u<it_v)
-            std::reverse(it_u, it_v + 1);
+        auto it_l = find(R_u.begin(), R_u.end(), lhand);
+        auto it_r = find(R_u.begin(), R_u.end(), rhand);
+        if (it_l < it_r)
+            std::reverse(it_l, it_r + 1);
         else
-            return false;
+            std::reverse(it_r, it_l + 1);
         double dian2=insertStationByRemove2(R_u,params.c_evrp).second;
         if(dian2-(routeU->fit_charge)>-MY_EPSILON)
             return false;
     }
+    
+    
+    auto r5=seeRoute(routeU);
+    auto r6=seeRoute(routeV);
+    // 反转线路
 	Node * nodeNum = nodeX->next;
 	nodeX->prev = nodeNum;
 	nodeX->next = nodeY;
-
 	while (nodeNum != nodeV)
 	{
 		Node * temp = nodeNum->next;
@@ -370,12 +745,17 @@ bool LocalSearch::move7()
 		nodeNum->prev = temp;
 		nodeNum = temp;
 	}
+ 
 
 	nodeV->next = nodeV->prev;
 	nodeV->prev = nodeU;
 	nodeU->next = nodeV;
 	nodeY->prev = nodeX;
-
+    
+    auto r7=seeRoute(routeU);
+    auto r8=seeRoute(routeV);
+    if(isEqual(R_u,r7)==false)
+        cout<<"\n\n"<<"错错错"<<"\n\n";
 	nbMoves++; // Increment move counter before updating route data
 	searchCompleted = false;
 	updateRouteData(routeU);
@@ -397,7 +777,30 @@ bool LocalSearch::move8()
 		+ penaltyExcessLoad(routeU->load + routeV->load - nodeU->cumulatedLoad - nodeV->cumulatedLoad);
 		
 	if (cost > -MY_EPSILON) return false;
-
+    
+    
+    auto r5=seeRoute(routeU);
+    auto r6=seeRoute(routeV);
+    
+    auto it_u=find(r5.begin(), r5.end(),nodeUIndex);
+    auto it_x=find(r5.begin()+1, r5.end(),nodeXIndex);
+    auto it_v=find(r6.begin(), r6.end(),nodeVIndex);
+    auto it_y=find(r6.begin()+1, r6.end(),nodeYIndex);
+    vector<int> new_r5(r5.begin(),it_x);
+    new_r5.insert(new_r5.end(),reverse_iterator<decltype(it_u)>(it_v+1),
+                  reverse_iterator<decltype(it_u)>(r6.begin()));
+    vector<int> new_r6(reverse_iterator<decltype(it_u)>(r5.end()),
+                       reverse_iterator<decltype(it_u)>(it_x));
+    new_r6.insert(new_r6.end(),it_y,r6.end());
+    if(yu2)
+    {
+        double dian3=insertStationByRemove2(new_r5,params.c_evrp).second;
+        double dian4=insertStationByRemove2(new_r6,params.c_evrp).second;
+        if(dian3+dian4-routeU->fit_charge-routeV->fit_charge>-MY_EPSILON)
+            return false;
+        
+    }
+    
 	Node * depotU = routeU->depot;
 	Node * depotV = routeV->depot;
 	Node * depotUFin = routeU->depot->prev;
@@ -454,7 +857,10 @@ bool LocalSearch::move8()
 		depotUFin->prev = depotVSuiv;
 		depotUFin->prev->next = depotUFin;
 	}
-
+    auto r7=seeRoute(routeU);
+    auto r8=seeRoute(routeV);
+    if(isEqual(new_r5,r7)==false|| isEqual(new_r6,r8)==false)
+        cout<<endl<<"错错错"<<endl;
 	nbMoves++; // Increment move counter before updating route data
 	searchCompleted = false;
 	updateRouteData(routeU);
@@ -476,32 +882,47 @@ bool LocalSearch::move9()
 		+ penaltyExcessLoad(nodeV->cumulatedLoad + routeU->load - nodeU->cumulatedLoad);
 
 	if (cost > -MY_EPSILON) return false;
-
+    
+    auto r5=seeRoute(routeU);
+    auto r6=seeRoute(routeV);
+    auto it_u=find(r5.begin(), r5.end(),nodeUIndex);
+    auto it_x=find(r5.begin()+1, r5.end(),nodeXIndex);
+    auto it_v=find(r6.begin(), r6.end(),nodeVIndex);
+    auto it_y=find(r6.begin()+1, r6.end(),nodeYIndex);
+    vector<int> new_r5(r5.begin(),it_x);
+    new_r5.insert(new_r5.end(),it_y,r6.end());
+    vector<int> new_r6(r6.begin(),it_y);
+    new_r6.insert(new_r6.end(),it_x,r5.end());
+    if(yu2)
+    {
+        double dian3=insertStationByRemove2(new_r5,params.c_evrp).second;
+        double dian4=insertStationByRemove2(new_r6,params.c_evrp).second;
+        if(dian3+dian4-routeU->fit_charge-routeV->fit_charge>-MY_EPSILON)
+            return false;
+        
+    }
+    
 	Node * depotU = routeU->depot;
 	Node * depotV = routeV->depot;
 	Node * depotUFin = depotU->prev;
 	Node * depotVFin = depotV->prev;
 	Node * depotUpred = depotUFin->prev;
-
 	Node * count = nodeY;
 	while (!count->isDepot)
 	{
 		count->route = routeU;
 		count = count->next;
 	}
-
 	count = nodeX;
 	while (!count->isDepot)
 	{
 		count->route = routeV;
 		count = count->next;
 	}
-
 	nodeU->next = nodeY;
 	nodeY->prev = nodeU;
 	nodeV->next = nodeX;
 	nodeX->prev = nodeV;
-
 	if (nodeX->isDepot)
 	{
 		depotUFin->prev = depotVFin->prev;
@@ -516,56 +937,63 @@ bool LocalSearch::move9()
 		depotVFin->prev = depotUpred;
 		depotVFin->prev->next = depotVFin;
 	}
-
+    
+    
+    auto r7=seeRoute(routeU);
+    auto r8=seeRoute(routeV);
+    if(isEqual(new_r5,r7)==false|| isEqual(new_r6,r8)==false)
+        cout<<endl<<"错错错"<<endl;
+    
 	nbMoves++; // Increment move counter before updating route data
 	searchCompleted = false;
 	updateRouteData(routeU);
 	updateRouteData(routeV);
 	return true;
 }
-// 计算路线U和路线V之间的所有SWAP*，并应用最佳改进移动
+// (SWAP*) 计算路线U和路线V之间的所有SWAP*，并应用最佳改进移动
 bool LocalSearch::swapStar()
 {
-	SwapStarElement myBestSwapStar;
+	SwapStarElement myBestSwapStar; // 用于记录当前最佳 SWAP* 移动的对象。
 
-	// Preprocessing insertion costs
+	// 对两条路线进行插入成本的预处理，以便更快地评估潜在的SWAP*移动。
 	preprocessInsertions(routeU, routeV);
 	preprocessInsertions(routeV, routeU);
 
-	// Evaluating the moves
+	// 遍历路线U和V上的每个节点，评估所有可能的SWAP*移动。
 	for (nodeU = routeU->depot->next; !nodeU->isDepot; nodeU = nodeU->next)
 	{
 		for (nodeV = routeV->depot->next; !nodeV->isDepot; nodeV = nodeV->next)
 		{
+            // 计算交换操作对路线U和V负载惩罚的影响。
 			double deltaPenRouteU = penaltyExcessLoad(routeU->load + params.cli[nodeV->cour].demand - params.cli[nodeU->cour].demand) - routeU->penalty;
 			double deltaPenRouteV = penaltyExcessLoad(routeV->load + params.cli[nodeU->cour].demand - params.cli[nodeV->cour].demand) - routeV->penalty;
 
-			// Quick filter: possibly early elimination of many SWAP* due to the capacity constraints/penalties and bounds on insertion costs
+			// 快速筛选：基于容量约束和插入成本上限，可能提前排除许多SWAP*移动。
 			if (deltaPenRouteU + nodeU->deltaRemoval + deltaPenRouteV + nodeV->deltaRemoval <= 0)
 			{
 				SwapStarElement mySwapStar;
 				mySwapStar.U = nodeU;
 				mySwapStar.V = nodeV;
 
-				// Evaluate best reinsertion cost of U in the route of V where V has been removed
+				// 评估将U插入到V所在路线（在移除V后）的最佳重插入成本。
 				double extraV = getCheapestInsertSimultRemoval(nodeU, nodeV, mySwapStar.bestPositionU);
 
-				// Evaluate best reinsertion cost of V in the route of U where U has been removed
+				// 评估将V插入到U所在路线（在移除U后）的最佳重插入成本。
 				double extraU = getCheapestInsertSimultRemoval(nodeV, nodeU, mySwapStar.bestPositionV);
 
-				// Evaluating final cost
+				// 计算总的移动成本。
 				mySwapStar.moveCost = deltaPenRouteU + nodeU->deltaRemoval + extraU + deltaPenRouteV + nodeV->deltaRemoval + extraV
 					+ penaltyExcessDuration(routeU->duration + nodeU->deltaRemoval + extraU + params.cli[nodeV->cour].serviceDuration - params.cli[nodeU->cour].serviceDuration)
 					+ penaltyExcessDuration(routeV->duration + nodeV->deltaRemoval + extraV - params.cli[nodeV->cour].serviceDuration + params.cli[nodeU->cour].serviceDuration);
-
+                // 如果找到了更优的移动方案，更新最佳移动。
 				if (mySwapStar.moveCost < myBestSwapStar.moveCost)
 					myBestSwapStar = mySwapStar;
 			}
 		}
 	}
-
-	// Including RELOCATE from nodeU towards routeV (costs nothing to include in the evaluation at this step since we already have the best insertion location)
-	// Moreover, since the granularity criterion is different, this can lead to different improving moves
+    
+    // 包括从nodeU到routeV的RELOCATE（在这一步包含评估成本不高，因为我们已经有了最佳插入位置）
+    // 此外，由于粒度标准不同，这可能导致不同的改进移动
 	for (nodeU = routeU->depot->next; !nodeU->isDepot; nodeU = nodeU->next)
 	{
 		SwapStarElement mySwapStar;
@@ -583,7 +1011,7 @@ bool LocalSearch::swapStar()
 			myBestSwapStar = mySwapStar;
 	}
 
-	// Including RELOCATE from nodeV towards routeU
+	// 包括从nodeV到routeU的RELOCATE
 	for (nodeV = routeV->depot->next; !nodeV->isDepot; nodeV = nodeV->next)
 	{
 		SwapStarElement mySwapStar;
@@ -601,27 +1029,37 @@ bool LocalSearch::swapStar()
 			myBestSwapStar = mySwapStar;
 	}
 
+    // 没有改进，返回false
 	if (myBestSwapStar.moveCost > -MY_EPSILON) return false;
 
-	// Applying the best move in case of improvement
+ 
+	// 如果有改进，则应用最佳移动
 	if (myBestSwapStar.bestPositionU != NULL) insertNode(myBestSwapStar.U, myBestSwapStar.bestPositionU);
+    if(myBestSwapStar.bestPositionU != NULL&&yu2)
+    {
+    
+    }
 	if (myBestSwapStar.bestPositionV != NULL) insertNode(myBestSwapStar.V, myBestSwapStar.bestPositionV);
-	nbMoves++; // Increment move counter before updating route data
-	searchCompleted = false;
+	nbMoves++; // 在更新路线数据之前增加移动计数器
+	searchCompleted = false;    // 标记搜索尚未完成
 	updateRouteData(routeU);
 	updateRouteData(routeV);
 	return true;
 }
-// 计算V在路线中的插入成本和位置，其中V被省略
+// (SWAP*) 计算V所在路线中的插入成本和位置，其中V被省略
 double LocalSearch::getCheapestInsertSimultRemoval(Node * U, Node * V, Node *& bestPosition)
 {
+    // 获取关于节点V路线中节点U的三个最佳插入位置的预处理信息
 	ThreeBestInsert * myBestInsert = &bestInsertClient[V->route->cour][U->cour];
 	bool found = false;
-
-	// Find best insertion in the route such that V is not next or pred (can only belong to the top three locations)
+    
+    // 检查这三个最佳位置，并找到一个既不是V也不紧邻V的位置
+    // 循环遍历这三个位置，选择成本最低且符合条件的位置作为最佳插入位置
 	bestPosition = myBestInsert->bestLocation[0];
 	double bestCost = myBestInsert->bestCost[0];
 	found = (bestPosition != V && bestPosition->next != V);
+    // 如果第一个位置不符合条件，检查第二个和第三个位置
+    // ...
 	if (!found && myBestInsert->bestLocation[1] != NULL)
 	{
 		bestPosition = myBestInsert->bestLocation[1];
@@ -634,8 +1072,8 @@ double LocalSearch::getCheapestInsertSimultRemoval(Node * U, Node * V, Node *& b
 			found = true;
 		}
 	}
-
-	// Compute insertion in the place of V
+    
+    // 计算将U直接插入到V的位置的成本，如果这个成本更低，则选择这个位置作为最佳位置
 	double deltaCost = params.timeCost[V->prev->cour][U->cour] + params.timeCost[U->cour][V->next->cour] - params.timeCost[V->prev->cour][V->next->cour];
 	if (!found || deltaCost < bestCost)
 	{
@@ -645,19 +1083,23 @@ double LocalSearch::getCheapestInsertSimultRemoval(Node * U, Node * V, Node *& b
 
 	return bestCost;
 }
-// 预处理路线R1中所有节点在路线R2中的插入成本
+// (SWAP*) 函数用于预处理路线R1中所有节点在路线R2中的插入成本
 void LocalSearch::preprocessInsertions(Route * R1, Route * R2)
 {
 	for (Node * U = R1->depot->next; !U->isDepot; U = U->next)
 	{
-		// Performs the preprocessing
+        // 计算并存储从其当前位置移除节点U的成本。
 		U->deltaRemoval = params.timeCost[U->prev->cour][U->next->cour] - params.timeCost[U->prev->cour][U->cour] - params.timeCost[U->cour][U->next->cour];
-		if (R2->whenLastModified > bestInsertClient[R2->cour][U->cour].whenLastCalculated)
+        // 如果路线R2自上次计算以来已被修改，则重新计算U在R2中的插入成本。
+        if (R2->whenLastModified > bestInsertClient[R2->cour][U->cour].whenLastCalculated)
 		{
+            // 重置相关数据结构，为新的计算做准备。
 			bestInsertClient[R2->cour][U->cour].reset();
 			bestInsertClient[R2->cour][U->cour].whenLastCalculated = nbMoves;
+            // 计算U插入到R2开头的成本，并更新最佳插入位置。
 			bestInsertClient[R2->cour][U->cour].bestCost[0] = params.timeCost[0][U->cour] + params.timeCost[U->cour][R2->depot->next->cour] - params.timeCost[0][R2->depot->next->cour];
 			bestInsertClient[R2->cour][U->cour].bestLocation[0] = R2->depot;
+            // 遍历R2的每个节点V，评估将U插入到V之后的成本，并更新最佳插入位置。
 			for (Node * V = R2->depot->next; !V->isDepot; V = V->next)
 			{
 				double deltaCost = params.timeCost[V->cour][U->cour] + params.timeCost[U->cour][V->next->cour] - params.timeCost[V->cour][V->next->cour];
@@ -727,7 +1169,7 @@ void LocalSearch::add_f3(vector<int>& g, vector<int> add, int after)
 
 }
 
-// 更新路线的预处理数据
+
 pair<vector<int>, double> LocalSearch::insertStationByRemove2(vector<int> route, Case& instance)
 {
     list<pair<int, int>> stationInserted;
@@ -737,7 +1179,7 @@ pair<vector<int>, double> LocalSearch::insertStationByRemove2(vector<int> route,
             allowedDis = instance.maxDis - instance.distances[stationInserted.back().second][route[i]];
         }
         int onestation = instance.findNearestStationFeasible(route[i], route[i + 1], allowedDis);
-        if (onestation == -1) return make_pair(route, -1);
+        if (onestation == -1) return make_pair(route, INT_MAX);
         stationInserted.push_back(make_pair(i, onestation));
     }
     /*for (int i = 0; i < (int)route.size() - 1; i++) {
@@ -836,7 +1278,7 @@ pair<vector<int>, double> LocalSearch::insertStationByRemove2(vector<int> route,
     }
     return make_pair(route, summ);
 }
-
+// 更新路线的预处理数据
 void LocalSearch::updateRouteData(Route * myRoute)
 {
 	int myplace = 0;
@@ -846,7 +1288,7 @@ void LocalSearch::updateRouteData(Route * myRoute)
 	double cumulatedX = 0.;
 	double cumulatedY = 0.;
 //修改的地方
-    vector<int> r2({0});
+    vector<int> temp_route({0});
 	Node * mynode = myRoute->depot;
 	mynode->position = 0;
 	mynode->cumulatedLoad = 0.;
@@ -861,7 +1303,7 @@ void LocalSearch::updateRouteData(Route * myRoute)
 		mynode->position = myplace;
 		myload += params.cli[mynode->cour].demand;
 		mytime += params.timeCost[mynode->prev->cour][mynode->cour] + params.cli[mynode->cour].serviceDuration;
-        r2.push_back(mynode->cour);//修改的地方
+        temp_route.push_back(mynode->cour);//修改的地方
 		myReversalDistance += params.timeCost[mynode->cour][mynode->prev->cour] - params.timeCost[mynode->prev->cour][mynode->cour] ;
 		mynode->cumulatedLoad = myload;
 		mynode->cumulatedTime = mytime;
@@ -875,19 +1317,20 @@ void LocalSearch::updateRouteData(Route * myRoute)
 		}
 		firstIt = false;
 	}
-
+    // 更新路线持续时间、负载、罚分、顾客数量、反转后距离
 	myRoute->duration = mytime;
 	myRoute->load = myload;
 	myRoute->penalty = penaltyExcessDuration(mytime) + penaltyExcessLoad(myload);
 	myRoute->nbCustomers = myplace-1;
 	myRoute->reversalDistance = myReversalDistance;
-	// Remember "when" this route has been last modified (will be used to filter unnecessary move evaluations)
+	// 更新这条路线最后一次修改的时间 (将会用在过滤不重要移动的评估)
 	myRoute->whenLastModified = nbMoves ;
-
+    
+    // 如果路线没有顾客，则更新该路线在空路线集合中的状态
 	if (myRoute->nbCustomers == 0)
 	{
-		myRoute->polarAngleBarycenter = 1.e30;
-		emptyRoutes.insert(myRoute->cour);
+		myRoute->polarAngleBarycenter = 1.e30; // 设置一个非常大的角度值，代表没有重心角
+		emptyRoutes.insert(myRoute->cour); // 将路线加入空路线集合
 	}
 	else
 	{
@@ -895,14 +1338,14 @@ void LocalSearch::updateRouteData(Route * myRoute)
 		emptyRoutes.erase(myRoute->cour);
 	}
     //修改的地方
-    myRoute->rrr=r2;
-    if(r2.size()<=2)
+    myRoute->rrr=temp_route;
+    if(temp_route.size() <= 2)
         myRoute->fit_charge=INT_MAX;
     else
-        myRoute->fit_charge=insertStationByRemove2(r2,params.c_evrp).second;//修改的地方
+        myRoute->fit_charge=insertStationByRemove2(temp_route, params.c_evrp).second;
 }
 
-void LocalSearch::calRouteCharge(Route * myRoute)
+double LocalSearch::calRouteCharge(Route * myRoute)
 {
     vector<int> r2({0});
     Node * mynode = myRoute->depot;
@@ -914,8 +1357,29 @@ void LocalSearch::calRouteCharge(Route * myRoute)
 
         firstIt = false;
     }
-    myRoute->fit_charge=insertStationByRemove2(r2,params.c_evrp).second;
+    auto fitness_evrp=insertStationByRemove2(r2,params.c_evrp).second;
+    return fitness_evrp;
 
+}
+vector<int> LocalSearch::seeRoute(Route * myRoute)
+{
+    vector<int> r2({0});
+    Node * mynode = myRoute->depot;
+    bool firstIt = true;
+    while (!mynode->isDepot || firstIt)
+    {
+        mynode = mynode->next;
+        r2.push_back(mynode->cour);
+
+        firstIt = false;
+    }
+    return r2;
+}
+bool LocalSearch::isEqual(const std::vector<int>& v1, const std::vector<int>& v2) {
+    if (v1.size() != v2.size()) {
+        return false; // 大小不同，直接返回false
+    }
+    return std::equal(v1.begin(), v1.end(), v2.begin());
 }
 // 将解决方案加载到LS中
 void LocalSearch::loadIndividual(const Individual & indiv)
