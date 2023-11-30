@@ -1,2 +1,4 @@
 /cmake-build-debug/
 /cmake-build-release/
+/Program/C_Interface.cpp
+/Program/C_Interface.h

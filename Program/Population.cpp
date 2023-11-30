@@ -60,7 +60,9 @@ bool Population::addIndividual(const Individual & indiv, bool updateFeasible)
 		{
 			bestSolutionOverall = indiv;
 			//searchProgress.push_back({ clock() - params.startTime , bestSolutionOverall.eval.penalizedCost });
-			searchProgress.push_back({ params.dai , bestSolutionOverall.eval.penalizedCost });
+            
+            searchProgress.push_back(make_tuple(params.dai,(double)bestSolutionOverall.eval.penalizedCost,(double)(clock() - params.startTime)/(double)CLOCKS_PER_SEC));
+			
 		}
 		return true;
 	}
@@ -275,19 +277,40 @@ double Population::getAverageCost(const SubPopulation & pop)
 // 将解决方案改进的历史导出到文件
 void Population::exportSearchProgress(std::string fileName, std::string instanceName)
 {
+    if (size_t pos = fileName.find_last_of('/'); pos != std::string::npos)
+        fileName.insert(pos + 1, "more/");
+    // 创建文件所在目录
+    std::filesystem::path filePath(fileName);
+    if(filePath.has_parent_path()) {
+        std::filesystem::path dirPath = filePath.parent_path();
+        if (!std::filesystem::exists(dirPath)) {
+            std::filesystem::create_directories(dirPath);
+        }
+    }
 	std::ofstream myfile(fileName);
-	for (std::pair<clock_t, double> state : searchProgress)
+	for (auto state : searchProgress)
 		//myfile << instanceName << ";" << params.ap.seed << ";" << state.second << ";" << (double)state.first / (double)CLOCKS_PER_SEC << std::endl;
-		myfile << instanceName << ";" << params.ap.seed << ";" << state.first << ";" << state.second << std::endl;
+		myfile << instanceName << ";" << params.ap.seed << ";" << std::get<0>(state) << ";" << std::fixed << std::setprecision(3)<< std::get<1>(state) <<";" << std::get<2>(state)<< std::endl;
 }
 
 
 // 将个体导出为CVRPLib格式
 void Population::exportCVRPLibFormat(const Individual & indiv, std::string fileName)
 {
+    // 创建文件所在目录
+    std::filesystem::path filePath(fileName);
+    if(filePath.has_parent_path()) {
+        std::filesystem::path dirPath = filePath.parent_path();
+        if (!std::filesystem::exists(dirPath)) {
+            std::filesystem::create_directories(dirPath);
+        }
+    }
+    
 	std::ofstream myfile(fileName);
 	if (myfile.is_open())
 	{
+        myfile << "[Cost] : " << std::fixed << std::setprecision(3) <<indiv.eval.penalizedCost << std::endl;
+        myfile << "[Time] : " << std::fixed << std::setprecision(3) <<(double)(clock() - params.startTime) / (double)CLOCKS_PER_SEC << std::endl<< std::endl;
 		for (int k = 0; k < (int)indiv.chromR.size(); k++)
 		{
 			if (!indiv.chromR[k].empty())
@@ -297,7 +320,8 @@ void Population::exportCVRPLibFormat(const Individual & indiv, std::string fileN
 				myfile << std::endl;
 			}
 		}
-		myfile << "Cost " << indiv.eval.penalizedCost << std::endl;
+		
+  
 	}
 	else std::cout << "----- IMPOSSIBLE TO OPEN: " << fileName << std::endl;
 }

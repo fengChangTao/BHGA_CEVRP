@@ -1,4 +1,3 @@
-
 #ifndef COMMAND_LINE_H
 #define COMMAND_LINE_H
 
@@ -6,7 +5,7 @@
 #include <string>
 #include <climits>
 #include "AlgorithmParameters.h"
-using namespace std;
+
 class CommandLine
 {
 public:
@@ -17,7 +16,7 @@ public:
     std::string evrpInstance;		// evrp实例的路径
 	std::string pathSolution;		// 解的路径
 	bool verbose     = true; 		// 日志的详细级别
-	bool isRoundingInteger = true;	// 是否四舍五入
+	int isRoundingInteger = 0;	    // 是否用浮点数矩阵，默认不用
 
 	// 读取命令行并提取可用选项
 	CommandLine(int argc, char* argv[])
@@ -29,9 +28,15 @@ public:
 		}
 		else
 		{
-			pathInstance = std::string(argv[1]);
+            std::string s1=std::string(argv[1]);
+            auto lastDot = s1.find_last_of(".");    // 去掉原有后缀
+            if(lastDot!=std::string::npos)
+                s1 = s1.substr(0,lastDot);
+            if(s1.find('/') == std::string::npos)   // 简洁表达，则添加前缀
+                s1 = "../Instances/CVRP/" + s1;
+            pathInstance = s1 + ".vrp";             // 自行补充后缀
+            evrpInstance = s1 + ".evrp";
             
-            evrpInstance= pathInstance.substr(0, pathInstance.length() - 4) + ".evrp";
 			pathSolution = std::string(argv[2]);
 			for (int i = 3; i < argc; i += 2)
 			{
@@ -67,6 +72,23 @@ public:
 					ap.penaltyIncrease = atof(argv[i+1]);
 				else if (std::string(argv[i]) == "-penaltyDecrease")
 					ap.penaltyDecrease = atof(argv[i+1]);
+                else if (std::string(argv[i]) == "-mix")
+                {
+                    std::string mixValue = argv[i + 1];
+                    if (mixValue.length() == 5 && std::all_of(mixValue.begin(), mixValue.end(), ::isdigit))
+                    {
+                        isRoundingInteger = mixValue[0] - '0';  // 将字符转换为整数
+                        ap.hou = mixValue[1] - '0';             // 是否局部搜索后确认evrp值变优了才录用
+                        ap.mode=mixValue[2] - '0';
+                        ap.preCharge = mixValue[3] - '0';       // 是否启用预充电策略
+                        ap.numMoves=mixValue[4] - '0';          // 预充电具体步数到第几个move，默认为--0
+                    }
+                    else
+                    {
+                        std::cout << std::endl << "----- INVALID MIX VALUE: " << mixValue << std::endl;
+                        display_help(); throw std::string("Incorrect mix value");
+                    }
+                }
 				else
 				{
 					std::cout << "----- ARGUMENT NOT RECOGNIZED: " << std::string(argv[i]) << std::endl;
@@ -85,7 +107,7 @@ public:
 // [-round <bool>]：是否将距离四舍五入至最接近的整数。可选0（不四舍五入）或1（四舍五入）。默认为1。
 // [-log <bool>]：设置算法日志的详细级别。可以是0或1。默认为1。
 // 附加参数：
-// [-nbIterTraces <int>]：在HGS执行期间，两次显示轨迹之间的迭代次数。默认为500。
+// [-nbIterTraces <int>]：在HGS执行期间，命令行输出两次显示轨迹之间的迭代次数。默认为500。
 // [-nbGranular <int>]：粒度搜索参数，限制RI局部搜索中的移动次数。默认为20。
 // [-mu <int>]：最小种群规模。默认为25。
 // [-lambda <int>]：在达到最大种群规模之前所创建的解决方案数量（即，一代的规模）。默认为40。
@@ -95,7 +117,7 @@ public:
 // [-targetFeasible <double>]：在两次罚分更新之间，可行个体的目标比率。默认为0.2。
 // [-penaltyIncrease <double>]：在两次罚分更新之间，如果可行个体数量不足，罚分会增加的比率。默认为1.2。
 // [-penaltyDecrease <double>]：在两次罚分更新之间，如果可行个体数量足够，罚分会减少的比率。默认为0.85。
-
+// -mix 新增参数
 	// 输出使用说明
 	void display_help()
 	{

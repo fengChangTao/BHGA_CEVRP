@@ -1,26 +1,15 @@
-
-
 #ifndef INDIVIDUAL_H
 #define INDIVIDUAL_H
-#pragma once
-#include "Params.h"
+
 #include "case.h"
-#include <iostream>
-#include <fstream>
-#include <algorithm>
-#include <vector>
-#include <set>
-#include <unordered_set>
-#include <list>
-#include <sstream>
+#include "Params.h"
+
+
 using namespace std;
 
-// 我引入的两个函数
-pair<vector<int>, double> insertStationByRemove(vector<int> route, Case& instance);
-pair<double, vector<vector<int>>> chroSplit_new(vector<int> x, Case instance);
-//pair<vector<int>, double> insertStationByFeng(vector<int> route, Case& instance);
 
-//  类：评估个体
+
+//  类：个体的成本类
 struct EvalIndiv
 {
 	double penalizedCost = 0.;		// 解决方案的惩罚成本

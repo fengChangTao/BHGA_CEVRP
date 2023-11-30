@@ -1,11 +1,11 @@
-
-
 #ifndef POPULATION_H
 #define POPULATION_H
 
 #include "Individual.h"
 #include "LocalSearch.h"
 #include "Split.h"
+#include <iomanip>
+#include <filesystem>
 
 typedef std::vector <Individual*> SubPopulation ;
 
@@ -21,7 +21,7 @@ class Population
    std::list <bool> listFeasibilityLoad ;		// 由本地搜索生成的最近个体的负载可行性
    std::list <bool> listFeasibilityDuration ;	// 由本地搜索生成的最近个体的持续时间可行性
    // std::vector<std::pair<clock_t, double>> searchProgress; // 记录连续最佳解决方案的时间戳
-   std::vector<std::pair<int, double>> searchProgress;
+   std::vector<std::tuple<int, double, double>> searchProgress;
    Individual bestSolutionRestart;              // 当前算法重启时找到的最佳解决方案
    Individual bestSolutionOverall;              // 算法执行过程中找到的最佳解决方案
 

@@ -1,5 +1,3 @@
-
-
 #ifndef LOCALSEARCH_H
 #define LOCALSEARCH_H
 
@@ -139,8 +137,9 @@ private:
 	void setLocalVariablesRouteU(); // 初始化一些与routeU相关的本地变量和距离，以避免在距离矩阵中总是查询相同的值
 	void setLocalVariablesRouteV(); // 初始化一些与routeV相关的本地变量和距离，以避免在距离矩阵中总是查询相同的值
 
-	inline double penaltyExcessDuration(double myDuration) {return std::max<double>(0., myDuration - params.durationLimit)*penaltyDurationLS;}
-	inline double penaltyExcessLoad(double myLoad) {return std::max<double>(0., myLoad - params.vehicleCapacity)*penaltyCapacityLS;}
+ 
+	inline double penaltyExcessDuration(double myDuration) {return std::max<double>(0., myDuration - params.durationLimit)*penaltyDurationLS;} // 快速计算时间超额惩罚
+	inline double penaltyExcessLoad(double myLoad) {return std::max<double>(0., myLoad - params.vehicleCapacity)*penaltyCapacityLS;} // 快速计算负载超额惩罚
 
 	/* RELOCATE MOVES */
 	// (遗留标记：Prins 2004的move1...move9)
@@ -167,7 +166,7 @@ private:
 	static void insertNode(Node * U, Node * V);		// 解决方案更新：在V之后插入U
 	static void swapNode(Node * U, Node * V) ;		// 解决方案更新：交换U和V							   
 	void updateRouteData(Route * myRoute);			// 更新路线的预处理数据
-    static void remove_f3(vector<int>& g, vector<int> del);
+    static void remove_f3(vector<int>& g, vector<int> shanChu);
     static void add_f3(vector<int>& g, vector<int> add, int after);
     static bool isEqual(const std::vector<int>& v1, const std::vector<int>& v2);
     static pair<vector<int>, double> insertStationByRemove2(vector<int> route, Case& instance);
@@ -187,8 +186,10 @@ public:
 
     std::uniform_real_distribution<double> dis3;
     bool yuC=false;
-    bool yu2=true;
-
+    bool yu2=true;  // 是否启用预充电策略
+    bool isWarn=false;
+    int hou=0;
+    int numMoves;
 	// 构造函数
 	LocalSearch(Params & params);
 };

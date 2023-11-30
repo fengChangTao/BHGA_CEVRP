@@ -1,7 +1,6 @@
 //
 // 根据路径读取实例文件
 //
-
 #ifndef INSTANCECVRPLIB_H
 #define INSTANCECVRPLIB_H
 #include<string>
@@ -20,7 +19,7 @@ public:
 	bool isDurationConstraint = false;						// 问题是否包含持续时间约束，默认值为false
 	int nbClients ;											// 客户的数目 (excluding the depot)
 
-	InstanceCVRPLIB(std::string pathToInstance, bool isRoundingInteger);
+	InstanceCVRPLIB(std::string pathToInstance, int isRoundingInteger);
 };
 
 

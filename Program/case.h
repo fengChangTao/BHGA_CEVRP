@@ -1,17 +1,30 @@
-#pragma once
+#ifndef CASE_H
+#define CASE_H
+
 #include <iostream>
 #include <fstream>
 #include <sstream>
+#include <filesystem>
+
 #include <vector>
+#include <tuple>
+#include <list>
 #include <set>
+#include <unordered_set>
+#include <map>
+#include <unordered_map>
+
 #include <algorithm>
 #include <cmath>
 #include <cstring>
-#include <float.h>
+#include <cfloat>
 #include <string>
-#include <stdio.h>
+#include <cstdio>
+#include <climits>
 
 using namespace std;
+
+
 
 class Case {
 public:
@@ -28,7 +41,7 @@ public:
 	int findNearestStation(int);
 	int findNearestStation(int, int);
 	// 寻找最近的可行充电站
-	int findNearestStationFeasible(int, int, double);
+	int findNearestStationFeasible(int, int, double) const;
 	int findNearestStationFeasible2(int, int, double);
 	// 输出所有位置
 	void writeAllPositions();
@@ -69,3 +82,8 @@ public:
 
 	vector<vector<int>> correlatedVertices;//存储最近的20个节点
 };
+
+pair<vector<int>, double> insertStationByRemove5(vector<int> route,const Case& instance);
+pair<double, vector<vector<int>>> chroSplit_new5(vector<int> x, Case instance);
+double calCost(vector<vector<int>>& allRoutes,const Case& instance);
+#endif

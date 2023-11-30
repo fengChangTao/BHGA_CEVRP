@@ -1,9 +1,3 @@
-//
-// Created by chkwon on 3/23/22.
-//
-
-// This header file must be readable in C.
-
 #ifndef ALGORITHMPARAMETERS_H
 #define ALGORITHMPARAMETERS_H
 
@@ -23,6 +17,11 @@ struct AlgorithmParameters {
 	int nbIterTraces;       // 在HGS执行期间，每多少次迭代显示一次追踪，默认值为500。
 	double timeLimit;		// CPU时间限制，默认值: 0
 	int useSwapStar;		// 是否使用SWAP*局部搜索，默认值为1。只有在提供坐标时才可用。
+    
+    int preCharge=0;        // 是否使用预充电策略，默认为--否
+    int hou=0;              // 是否局部搜索后确认evrp值变优了才录用，默认为--否
+    int numMoves=88;         // 预充电具体步数到第几个move，默认为88，即根据前选项。
+    int mode=0;
 };
 
 #ifdef __cplusplus

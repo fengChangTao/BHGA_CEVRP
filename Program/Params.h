@@ -1,8 +1,6 @@
-
-
 #ifndef PARAMS_H
 #define PARAMS_H
-#pragma once
+
 #include "CircleSector.h"
 #include "AlgorithmParameters.h"
 #include "case.h"
@@ -67,7 +65,11 @@ public:
 
     Case c_evrp=Case("../Instances/CVRP/X-n143-k7.evrp",1);	// 引入evrp实例
 	string s1="";
+    int mode=0;
 	int dai=0;
+    int preCharge;  // 是否使用预充电策略，默认为--否
+    int hou;        // 是否后检查，局部搜索后确认evrp值变优了才录用，默认为--否
+    int numMoves;   // 预充电具体步数到第几个move，默认为--0
 	// 从给定数据集开始初始化
     Params(
         const std::vector<double>& x_coords,

@@ -4,7 +4,7 @@
 #include <cmath>
 #include "InstanceCVRPLIB.h"
 
-InstanceCVRPLIB::InstanceCVRPLIB(std::string pathToInstance, bool isRoundingInteger = true)
+InstanceCVRPLIB::InstanceCVRPLIB(std::string pathToInstance, int isRoundingInteger=0)
 {
 	std::string content, content2, content3;
 	double serviceTimeData = 0.;
@@ -66,8 +66,8 @@ InstanceCVRPLIB::InstanceCVRPLIB(std::string pathToInstance, bool isRoundingInte
 					(x_coords[i] - x_coords[j]) * (x_coords[i] - x_coords[j])
 					+ (y_coords[i] - y_coords[j]) * (y_coords[i] - y_coords[j])
 				);
-
-				if (isRoundingInteger) dist_mtx[i][j] = round(dist_mtx[i][j]);
+                // 等于0，就不用浮点数矩阵
+				if (isRoundingInteger==0) dist_mtx[i][j] = round(dist_mtx[i][j]);
 			}
 		}
 

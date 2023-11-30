@@ -8,13 +8,19 @@ void Genetic::run()
 	int nbIter;				// 总迭代次数
 	int nbIterNonProd = 1;	// 未改进迭代次数
 	if (params.verbose) std::cout << "----- STARTING GENETIC ALGORITHM" << std::endl;
-	for (nbIter = 0,params.dai=0 ; nbIterNonProd <= params.ap.nbIter && (params.ap.timeLimit == 0 || (double)(clock()-params.startTime)/(double)CLOCKS_PER_SEC < params.ap.timeLimit) ; nbIter++,params.dai++)
+	for (nbIter = 0,params.dai=1 ; nbIterNonProd <= params.ap.nbIter && (params.ap.timeLimit == 0 || (double)(clock()-params.startTime)/(double)CLOCKS_PER_SEC < params.ap.timeLimit) ; nbIter++,params.dai++)
 	{	
 		/* 选择并交叉 */
 		crossoverOX(offspring, population.getBinaryTournament(),population.getBinaryTournament());
-
+        //后验证-第二种实现
+        double qian1=offspring.eval.penalizedCost;
+        auto off_backup=offspring;
 		/* 局部搜索 */
 		localSearch.run(offspring, params.penaltyCapacity, params.penaltyDuration);
+        if(double qian2=offspring.eval.penalizedCost;params.hou==2&&(qian2-qian1>MY_EPSILON))
+        {
+            offspring=off_backup;
+        }
 		bool isNewBest = population.addIndividual(offspring,true);
 		if (!offspring.eval.isFeasible && params.ran()%2 == 0) // 在不可行的情况下修复一半的解决方案
 		{

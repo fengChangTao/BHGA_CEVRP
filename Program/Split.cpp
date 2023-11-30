@@ -1,4 +1,4 @@
-#include "Split.h" 
+#include "Split.h"
 // 通用Split函数(测试无限车队，只有在没有产生可行的解决方案时，才运行有限车队的Split算法)
 void Split::generalSplit(Individual & indiv, int nbMaxVehicles)
 {
@@ -23,8 +23,9 @@ void Split::generalSplit(Individual & indiv, int nbMaxVehicles)
 	// 首先尝试简单split，如果不成功，则尝试有限车队的split
 	if (splitSimple(indiv) == 0)
 		splitLF(indiv);
-
-	// 构建个体结构的其余部分
+//    if(splitLF(indiv)==0)
+//        splitSimple(indiv);
+	// 构建个体结构的其余部分，计算cost等值
 	indiv.evaluateCompleteCost(params);
 }
 
@@ -119,7 +120,7 @@ int Split::splitLF(Individual & indiv)
 
 	// MAIN ALGORITHM -- Simple Split using Bellman's algorithm in topological order
 	// This code has been maintained as it is very simple and can be easily adapted to a variety of constraints, whereas the O(n) Split has a more restricted application scope
-	if (params.isDurationConstraint) 
+	if (params.isDurationConstraint)
 	{
 		for (int k = 0; k < maxVehicles; k++)
 		{
@@ -164,7 +165,7 @@ int Split::splitLF(Individual & indiv)
 
 				if (i < params.nbClients)
 				{
-					// If i is not dominated by the last of the pile 
+					// If i is not dominated by the last of the pile
 					if (!dominates(queue.get_back(), i, k))
 					{
 						// then i will be inserted, need to remove whoever he dominates

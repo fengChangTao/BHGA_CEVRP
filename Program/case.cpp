@@ -8,6 +8,8 @@ Case::Case(string filename, int ID) {
 	this->depot = 0;
 	ifstream infile(filename.c_str());
 	char line[250];
+    if(!infile.is_open())
+        throw std::string("Impossible to open instance file: " + filename);
 	while (infile.getline(line, 249))
 	{
 		string templine(line);
@@ -283,7 +285,7 @@ int Case::findNearestStation(int x, int y) {
 
 
 //reture the station within maxdis from x, and min dis[x][s]+dis[y][s]
-int Case::findNearestStationFeasible(int x, int y, double maxdis) {
+int Case::findNearestStationFeasible(int x, int y, double maxdis) const{
 	int thestation = -1;
 	double bigdis = DBL_MAX;
 	for (int i = depotNumber + customerNumber; i < depotNumber + customerNumber + stationNumber; i++) {
@@ -419,4 +421,186 @@ void Case::checkASoluton(string filename) {
 			}
 		}
 	}
+}
+
+// 移除启发
+pair<vector<int>, double> insertStationByRemove5(vector<int> route, const Case& instance) {
+    list<pair<int, int>> stationInserted;
+    for (int i = 0; i < (int)route.size() - 1; i++) {
+        double allowedDis = instance.maxDis;
+        if (i != 0) {
+            allowedDis = instance.maxDis - instance.distances[stationInserted.back().second][route[i]];
+        }
+        int onestation = instance.findNearestStationFeasible(route[i], route[i + 1], allowedDis);
+        if (onestation == -1) return make_pair(route, INT_MAX);
+        stationInserted.push_back(make_pair(i, onestation));
+    }
+    /*for (int i = 0; i < (int)route.size() - 1; i++) {
+        stationInserted.push_back(make_pair(i, instance.bestStation[route[i]][route[i + 1]]));
+    }*/
+    while (!stationInserted.empty())
+    {
+        bool changed = false;
+        list<pair<int, int>>::iterator delone = stationInserted.begin();
+        double savedis = 0;
+        list<pair<int, int>>::iterator itr = stationInserted.begin();
+        list<pair<int, int>>::iterator next = itr;
+        next++;
+        if (next != stationInserted.end()) {
+            int endInd = next->first;
+            int endstation = next->second;
+            double sumdis = 0;
+            for (int i = 0; i < endInd; i++) {
+                sumdis += instance.distances[route[i]][route[i + 1]];
+            }
+            sumdis += instance.distances[route[endInd]][endstation];
+            if (sumdis <= instance.maxDis) {
+                savedis = instance.distances[route[itr->first]][itr->second] + instance.distances[itr->second][route[itr->first + 1]]
+                          - instance.distances[route[itr->first]][route[itr->first + 1]];
+            }
+        }
+        else {
+            double sumdis = 0;
+            for (int i = 0; i < (int)route.size() - 1; i++) {
+                sumdis += instance.distances[route[i]][route[i + 1]];
+            }
+            if (sumdis <= instance.maxDis) {
+                savedis = instance.distances[route[itr->first]][itr->second] + instance.distances[itr->second][route[itr->first + 1]]
+                          - instance.distances[route[itr->first]][route[itr->first + 1]];
+            }
+        }
+        itr++;
+        while (itr != stationInserted.end())
+        {
+            int startInd, endInd;
+            next = itr;
+            next++;
+            list<pair<int, int>>::iterator prev = itr;
+            prev--;
+            double sumdis = 0;
+            if (next != stationInserted.end()) {
+                startInd = prev->first + 1;
+                endInd = next->first;
+                sumdis += instance.distances[prev->second][route[startInd]];
+                for (int i = startInd; i < endInd; i++) {
+                    sumdis += instance.distances[route[i]][route[i + 1]];
+                }
+                sumdis += instance.distances[route[endInd]][next->second];
+                if (sumdis <= instance.maxDis) {
+                    double savedistemp = instance.distances[route[itr->first]][itr->second] + instance.distances[itr->second][route[itr->first + 1]]
+                                         - instance.distances[route[itr->first]][route[itr->first + 1]];
+                    if (savedistemp > savedis) {
+                        savedis = savedistemp;
+                        delone = itr;
+                    }
+                }
+            }
+            else {
+                startInd = prev->first + 1;
+                sumdis += instance.distances[prev->second][route[startInd]];
+                for (int i = startInd; i < (int)route.size() - 1; i++) {
+                    sumdis += instance.distances[route[i]][route[i + 1]];
+                }
+                if (sumdis <= instance.maxDis) {
+                    double savedistemp = instance.distances[route[itr->first]][itr->second] + instance.distances[itr->second][route[itr->first + 1]]
+                                         - instance.distances[route[itr->first]][route[itr->first + 1]];
+                    if (savedistemp > savedis) {
+                        savedis = savedistemp;
+                        delone = itr;
+                    }
+                }
+            }
+            itr++;
+        }
+        if (savedis != 0) {
+            stationInserted.erase(delone);
+            changed = true;
+        }
+        if (!changed) {
+            break;
+        }
+    }
+    while (!stationInserted.empty())
+    {
+        route.insert(route.begin() + stationInserted.back().first + 1, stationInserted.back().second);
+        stationInserted.pop_back();
+    }
+    double summ = 0;
+    for (int i = 0; i < (int)route.size() - 1; i++) {
+        summ += instance.distances[route[i]][route[i + 1]];
+    }
+    return make_pair(route, summ);
+}
+// 传统的Split分割算法
+pair<double, vector<vector<int>>> chroSplit_new5(vector<int> x, Case instance) {
+    x.insert(x.begin(), 0);
+    int lens = instance.depotNumber + instance.customerNumber;
+    vector<int> pp(lens, 0);
+    vector<double> vv(lens, DBL_MAX);
+    
+    vv[0] = 0;
+    for (int i = 1; i < (int)x.size(); i++) {
+        double load = 0;
+        double cost = 0;
+        int j = i;
+        for (;;)
+        {
+            load += instance.demand[x[j]];
+            if (i == j) {
+                cost = instance.distances[0][x[j]] * 2;
+            }
+            else {
+                cost = cost - instance.distances[x[j - 1]][0];
+                cost = cost + instance.distances[x[j - 1]][x[j]];
+                cost = cost + instance.distances[0][x[j]];
+            }
+            if (load <= (double)instance.maxC) {
+                if (vv[i - 1] + cost < vv[j]) {
+                    vv[j] = vv[i - 1] + cost;
+                    pp[j] = i - 1;
+                }
+                j++;
+            }
+            if (j > instance.customerNumber || load > instance.maxC)
+                break;
+        }
+    }
+    
+    vector<vector<int>> allroutes;
+    int j = x.size() - 1;
+    while (true) {
+        int i = pp[j];
+        vector<int> temp(x.begin() + i + 1, x.begin() + j + 1);
+        allroutes.push_back(temp);
+        j = i;
+        if (i == 0) {
+            break;
+        }
+    }
+    
+    double totalDistance = 0.0;
+    for (auto route : allroutes)
+    {
+        // 在route的开头插入一个0
+        route.insert(route.begin(), 0);
+        // 在route的末尾添加一个0
+        route.push_back(0);
+        
+        totalDistance +=insertStationByRemove5(route, instance).second;
+    }
+    
+    return pair<double, vector<vector<int>>>(totalDistance, allroutes);
+}
+
+double calCost(vector<vector<int>>& allRoutes,const Case& instance)
+{
+    double cost=0;
+    for(auto route:allRoutes)
+    {
+        if(route.size()==0) continue;
+        route.insert(route.begin(), 0);
+        route.push_back(0);
+        cost+=insertStationByRemove5(route,instance).second;
+    }
+    return cost;
 }
