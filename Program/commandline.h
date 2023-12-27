@@ -89,7 +89,11 @@ public:
                         display_help(); throw std::string("Incorrect mix value");
                     }
                 }
-				else
+                else if (std::string(argv[i]) == "-selected")
+                {
+                    ap.selected=argv[i+1];
+                }
+                else
 				{
 					std::cout << "----- ARGUMENT NOT RECOGNIZED: " << std::string(argv[i]) << std::endl;
 					display_help(); throw std::string("Incorrect line of command");

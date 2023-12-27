@@ -1,6 +1,7 @@
 #ifndef ALGORITHMPARAMETERS_H
 #define ALGORITHMPARAMETERS_H
 
+#include <string>
 struct AlgorithmParameters {
 	int nbGranular;			// 粒度搜索参数，限制RI局部搜索中的移动次数，默认值为20
 	int mu;					// 最小种群大小，默认值为25
@@ -22,6 +23,7 @@ struct AlgorithmParameters {
     int hou=0;              // 是否局部搜索后确认evrp值变优了才录用，默认为--否
     int numMoves=88;         // 预充电具体步数到第几个move，默认为88，即根据前选项。
     int mode=0;
+    std::string selected;
 };
 
 #ifdef __cplusplus

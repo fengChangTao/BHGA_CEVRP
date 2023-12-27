@@ -70,6 +70,7 @@ public:
     int preCharge;  // 是否使用预充电策略，默认为--否
     int hou;        // 是否后检查，局部搜索后确认evrp值变优了才录用，默认为--否
     int numMoves;   // 预充电具体步数到第几个move，默认为--0
+    std::string selected;
 	// 从给定数据集开始初始化
     Params(
         const std::vector<double>& x_coords,

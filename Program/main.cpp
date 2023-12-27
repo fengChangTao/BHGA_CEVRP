@@ -34,6 +34,7 @@ int main(int argc, char *argv[])
         params.numMoves=commandline.ap.numMoves;
         params.c_evrp=Case(commandline.evrpInstance,2);
 		params.s1=commandline.pathSolution;
+        params.selected=commandline.ap.selected;
 		// 运行 HGS
 		Genetic solver(params);
 		solver.run();

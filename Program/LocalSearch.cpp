@@ -226,7 +226,7 @@ bool LocalSearch::move1()
 	insertNode(nodeU, nodeV);   // 更改"受影响节点"的前后指针
     auto r7=seeRoute(routeU);
     auto r8=seeRoute(routeV);
-    if(yu2 && numMoves>=1)
+    if(yu2 && numMoves>=1 && checkSelected(1))
     {
         if(!intraRouteMove)
         {
@@ -319,7 +319,7 @@ bool LocalSearch::move2()
 	insertNode(nodeX, nodeU);
     auto r7=seeRoute(routeU);
     auto r8=seeRoute(routeV);
-    if(yu2 && numMoves>=2)
+    if(yu2 && numMoves>=2 && checkSelected(2))
     {
         if(!intraRouteMove)
         {
@@ -413,7 +413,7 @@ bool LocalSearch::move3()
 	insertNode(nodeU, nodeX);
     auto r7=seeRoute(routeU);
     auto r8=seeRoute(routeV);
-    if(yu2 && numMoves>=3)
+    if(yu2 && numMoves>=3 && checkSelected(3))
     {
         if(!intraRouteMove)
         {
@@ -507,7 +507,7 @@ bool LocalSearch::move4()
 	swapNode(nodeU, nodeV);
     auto r7=seeRoute(routeU);
     auto r8=seeRoute(routeV);
-    if(yu2 && numMoves>=4)
+    if(yu2 && numMoves>=4 && checkSelected(4))
     {
         if(!intraRouteMove)
         {
@@ -605,7 +605,7 @@ bool LocalSearch::move5()
     
     auto r7=seeRoute(routeU);
     auto r8=seeRoute(routeV);
-    if(yu2 && numMoves>=5)
+    if(yu2 && numMoves>=5 && checkSelected(5))
     {
         if(!intraRouteMove)
         {
@@ -707,7 +707,7 @@ bool LocalSearch::move6()
 	swapNode(nodeX, nodeY);
     auto r7=seeRoute(routeU);
     auto r8=seeRoute(routeV);
-    if(yu2 && numMoves>=6)
+    if(yu2 && numMoves>=6 && checkSelected(6))
     {
         if(!intraRouteMove)
         {
@@ -760,7 +760,7 @@ bool LocalSearch::move7()
 	if (nodeU->next == nodeV) return false;
     
     auto R_u=routeU->rrr;
-    if(yu2 && numMoves>=7)
+    if(yu2 && numMoves>=7 && checkSelected(7))
     {
         
         int lhand=nodeXIndex,rhand=nodeVIndex;
@@ -837,7 +837,7 @@ bool LocalSearch::move8()
     vector<int> new_r6(reverse_iterator<decltype(it_u)>(r5.end()),
                        reverse_iterator<decltype(it_u)>(it_x));
     new_r6.insert(new_r6.end(),it_y,r6.end());
-    if(yu2 && numMoves>=8)
+    if(yu2 && numMoves>=8 && checkSelected(8))
     {
         double dian3=insertStationByRemove2(new_r5,params.c_evrp).second;
         double dian4=insertStationByRemove2(new_r6,params.c_evrp).second;
@@ -938,7 +938,7 @@ bool LocalSearch::move9()
     new_r5.insert(new_r5.end(),it_y,r6.end());
     vector<int> new_r6(r6.begin(),it_y);
     new_r6.insert(new_r6.end(),it_x,r5.end());
-    if(yu2 && numMoves>=9)
+    if(yu2 && numMoves>=9 && checkSelected(9))
     {
         double dian3=insertStationByRemove2(new_r5,params.c_evrp).second;
         double dian4=insertStationByRemove2(new_r6,params.c_evrp).second;
@@ -1081,7 +1081,7 @@ bool LocalSearch::swapStar()
     auto r6=seeRoute(routeV);
     auto new_r5=r5;
     auto new_r6=r6;
-    if(yu2 && numMoves>=10)
+    if(yu2 && numMoves>=10 && checkSelected(10))
     {
         if (myBestSwapStar.bestPositionU != NULL)
         {
@@ -1521,7 +1521,15 @@ void LocalSearch::exportIndividual(Individual & indiv)
 
 	indiv.evaluateCompleteCost(params);
 }
-
+bool LocalSearch::checkSelected(int m)
+{
+    if(set2.empty())
+        return true;
+    else
+    {
+        return (bool)set2.count(m);
+    }
+}
 LocalSearch::LocalSearch(Params & params) : params (params),dis3(0,1)
 {
 	clients = std::vector < Node >(params.nbClients + 1);   // 客户+哨兵
@@ -1537,6 +1545,10 @@ LocalSearch::LocalSearch(Params & params) : params (params),dis3(0,1)
         numMoves=88;
     else
         numMoves=params.numMoves;
+    for (char ch : params.selected)
+    {
+        set2.insert(ch - '0');
+    }
 	for (int i = 0; i <= params.nbClients; i++) 
 	{
         // 0是哨兵

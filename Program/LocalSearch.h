@@ -172,7 +172,7 @@ private:
     static pair<vector<int>, double> insertStationByRemove2(vector<int> route, Case& instance);
     double calRouteCharge(Route * myRoute);
     vector<int> seeRoute(Route * myRoute);
-
+    
 public:
 
 	// 使用指定的惩罚值运行LS
@@ -183,13 +183,16 @@ public:
 
 	// 将LS解决方案导出到个体，并根据Params中的原始惩罚权重计算惩罚成本
 	void exportIndividual(Individual & indiv);
-
+    
     std::uniform_real_distribution<double> dis3;
     bool yuC=false;
     bool yu2=true;  // 是否启用预充电策略
     bool isWarn=false;
     int hou=0;
     int numMoves;
+    unordered_set<int> set2;
+    // 检查是否需要限制特定的预充电步数
+    bool checkSelected(int m);
 	// 构造函数
 	LocalSearch(Params & params);
 };
