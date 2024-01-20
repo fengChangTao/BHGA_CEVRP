@@ -44,7 +44,7 @@ class Split
  private:
 
  // Problem parameters
- const Params & params ;
+ Params & params ;
  int maxVehicles ;
 
  /* Auxiliary data structures to run the Linear Split algorithm */
@@ -90,7 +90,7 @@ public:
   void generalSplit(Individual & indiv, int nbMaxVehicles);
 
   // Constructor
-  Split(const Params & params);
+  Split(Params & params);
 
 };
 #endif

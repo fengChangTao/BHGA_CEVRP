@@ -33,7 +33,7 @@ public:
   double biasedFitness;												// 解决方案的偏置适应度
   
   // 从chromR的信息中测量个体的成本和可行性（需要填充chromR并访问Params）
-  void evaluateCompleteCost(const Params & params);
+  void evaluateCompleteCost(Params & params);
 
   // 构造一个只包含有随机访问顺序的巨型旅行的随机个体
   Individual(Params & params);

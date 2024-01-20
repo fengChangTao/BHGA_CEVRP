@@ -204,8 +204,8 @@ bool LocalSearch::move1()
         {
             remove_f3(R_u,{nodeUIndex});
             add_f3(R_v,{nodeUIndex},nodeVIndex);
-            double dian2=insertStationByRemove2(R_u,params.c_evrp).second;
-            double dian3=insertStationByRemove2(R_v,params.c_evrp).second;
+            double dian2= focusEnumeration(R_u, params.c_evrp).second;
+            double dian3= focusEnumeration(R_v, params.c_evrp).second;
 
             if((dian2+dian3-routeU->fit_charge-routeV->fit_charge)>-MY_EPSILON)
                 return false;
@@ -214,7 +214,7 @@ bool LocalSearch::move1()
         {
             remove_f3(R_u,{nodeUIndex});
             add_f3(R_u,{nodeUIndex},nodeVIndex);
-            double dian4=insertStationByRemove2(R_u,params.c_evrp).second;
+            double dian4= focusEnumeration(R_u, params.c_evrp).second;
             if((dian4-routeU->fit_charge)>-MY_EPSILON)
                 return false;
         }
@@ -297,8 +297,8 @@ bool LocalSearch::move2()
         {
             remove_f3(R_u,{nodeUIndex,nodeXIndex});
             add_f3(R_v,{nodeUIndex,nodeXIndex},nodeVIndex);
-            double dian2=insertStationByRemove2(R_u,params.c_evrp).second;
-            double dian3=insertStationByRemove2(R_v,params.c_evrp).second;
+            double dian2= focusEnumeration(R_u, params.c_evrp).second;
+            double dian3= focusEnumeration(R_v, params.c_evrp).second;
 
             if((dian2+dian3-routeU->fit_charge-routeV->fit_charge)>-MY_EPSILON)
                 return false;
@@ -307,7 +307,7 @@ bool LocalSearch::move2()
         {
             remove_f3(R_u,{nodeUIndex,nodeXIndex});
             add_f3(R_u,{nodeUIndex,nodeXIndex},nodeVIndex);
-            double dian4=insertStationByRemove2(R_u,params.c_evrp).second;
+            double dian4= focusEnumeration(R_u, params.c_evrp).second;
             if((dian4-routeU->fit_charge)>-MY_EPSILON)
                 return false;
         }
@@ -391,8 +391,8 @@ bool LocalSearch::move3()
         {
             remove_f3(R_u,{nodeUIndex,nodeXIndex});
             add_f3(R_v,{nodeXIndex,nodeUIndex},nodeVIndex);
-            double dian2=insertStationByRemove2(R_u,params.c_evrp).second;
-            double dian3=insertStationByRemove2(R_v,params.c_evrp).second;
+            double dian2= focusEnumeration(R_u, params.c_evrp).second;
+            double dian3= focusEnumeration(R_v, params.c_evrp).second;
 
             if((dian2+dian3-routeU->fit_charge-routeV->fit_charge)>-MY_EPSILON)
                 return false;
@@ -401,7 +401,7 @@ bool LocalSearch::move3()
         {
             remove_f3(R_u,{nodeUIndex,nodeXIndex});
             add_f3(R_u,{nodeXIndex,nodeUIndex},nodeVIndex);
-            double dian4=insertStationByRemove2(R_u,params.c_evrp).second;
+            double dian4= focusEnumeration(R_u, params.c_evrp).second;
             if((dian4-routeU->fit_charge)>-MY_EPSILON)
                 return false;
         }
@@ -486,8 +486,8 @@ bool LocalSearch::move4()
             auto it_u = find(R_u.begin(), R_u.end(), nodeUIndex);
             auto it_v = find(R_v.begin(), R_v.end(), nodeVIndex);
             iter_swap(it_u, it_v);
-            double dian2=insertStationByRemove2(R_u,params.c_evrp).second;
-            double dian3=insertStationByRemove2(R_v,params.c_evrp).second;
+            double dian2= focusEnumeration(R_u, params.c_evrp).second;
+            double dian3= focusEnumeration(R_v, params.c_evrp).second;
             if((dian2+dian3-routeU->fit_charge-routeV->fit_charge)>-MY_EPSILON)
                 return false;
         }
@@ -496,7 +496,7 @@ bool LocalSearch::move4()
             auto it_u = find(R_u.begin(), R_u.end(), nodeUIndex);
             auto it_v = find(R_u.begin(), R_u.end(), nodeVIndex);
             iter_swap(it_u, it_v);
-            double dian4=insertStationByRemove2(R_u,params.c_evrp).second;
+            double dian4= focusEnumeration(R_u, params.c_evrp).second;
             if((dian4-routeU->fit_charge)>-MY_EPSILON)
                 return false;
         }
@@ -581,8 +581,8 @@ bool LocalSearch::move5()
             remove_f3(R_u, { nodeXIndex });
             add_f3(R_v,{ nodeXIndex },nodeUIndex);
 
-            double dian2=insertStationByRemove2(R_u,params.c_evrp).second;
-            double dian3=insertStationByRemove2(R_v,params.c_evrp).second;
+            double dian2= focusEnumeration(R_u, params.c_evrp).second;
+            double dian3= focusEnumeration(R_v, params.c_evrp).second;
             if((dian2+dian3-routeU->fit_charge-routeV->fit_charge)>-MY_EPSILON)
                 return false;
         }
@@ -593,7 +593,7 @@ bool LocalSearch::move5()
             iter_swap(it_u, it_v);
             remove_f3(R_u, { nodeXIndex });
             add_f3(R_u,{ nodeXIndex },nodeUIndex);
-            double dian4=insertStationByRemove2(R_u,params.c_evrp).second;
+            double dian4= focusEnumeration(R_u, params.c_evrp).second;
             if((dian4-routeU->fit_charge)>-MY_EPSILON)
                 return false;
         }
@@ -682,8 +682,8 @@ bool LocalSearch::move6()
             auto it_y = find(R_v.begin(), R_v.end(), nodeYIndex);
             iter_swap(it_u, it_v);
             iter_swap(it_x,it_y);
-            double dian2=insertStationByRemove2(R_u,params.c_evrp).second;
-            double dian3=insertStationByRemove2(R_v,params.c_evrp).second;
+            double dian2= focusEnumeration(R_u, params.c_evrp).second;
+            double dian3= focusEnumeration(R_v, params.c_evrp).second;
             if((dian2+dian3-routeU->fit_charge-routeV->fit_charge)>-MY_EPSILON)
                 return false;
         }
@@ -695,7 +695,7 @@ bool LocalSearch::move6()
             auto it_y = find(R_u.begin(), R_u.end(), nodeYIndex);
             iter_swap(it_u, it_v);
             iter_swap(it_x,it_y);
-            double dian4=insertStationByRemove2(R_u,params.c_evrp).second;
+            double dian4= focusEnumeration(R_u, params.c_evrp).second;
             if((dian4-routeU->fit_charge)>-MY_EPSILON)
                 return false;
         }
@@ -771,7 +771,7 @@ bool LocalSearch::move7()
             std::reverse(it_l, it_r + 1);
         else
             std::reverse(it_r, it_l + 1);
-        double dian2=insertStationByRemove2(R_u,params.c_evrp).second;
+        double dian2= focusEnumeration(R_u, params.c_evrp).second;
         if(dian2-(routeU->fit_charge)>-MY_EPSILON)
             return false;
     }
@@ -839,8 +839,8 @@ bool LocalSearch::move8()
     new_r6.insert(new_r6.end(),it_y,r6.end());
     if(yu2 && numMoves>=8 && checkSelected(8))
     {
-        double dian3=insertStationByRemove2(new_r5,params.c_evrp).second;
-        double dian4=insertStationByRemove2(new_r6,params.c_evrp).second;
+        double dian3= focusEnumeration(new_r5, params.c_evrp).second;
+        double dian4= focusEnumeration(new_r6, params.c_evrp).second;
         if(dian3+dian4-routeU->fit_charge-routeV->fit_charge>-MY_EPSILON)
             return false;
         
@@ -940,8 +940,8 @@ bool LocalSearch::move9()
     new_r6.insert(new_r6.end(),it_x,r5.end());
     if(yu2 && numMoves>=9 && checkSelected(9))
     {
-        double dian3=insertStationByRemove2(new_r5,params.c_evrp).second;
-        double dian4=insertStationByRemove2(new_r6,params.c_evrp).second;
+        double dian3= focusEnumeration(new_r5, params.c_evrp).second;
+        double dian4= focusEnumeration(new_r6, params.c_evrp).second;
         if(dian3+dian4-routeU->fit_charge-routeV->fit_charge>-MY_EPSILON)
             return false;
         
@@ -1094,8 +1094,8 @@ bool LocalSearch::swapStar()
             remove_f3(new_r6,{myBestSwapStar.V->cour});
             add_f3(new_r5,{myBestSwapStar.V->cour},myBestSwapStar.bestPositionV->cour);
         }
-        double dian3=insertStationByRemove2(new_r5,params.c_evrp).second;
-        double dian4=insertStationByRemove2(new_r6,params.c_evrp).second;
+        double dian3= focusEnumeration(new_r5, params.c_evrp).second;
+        double dian4= focusEnumeration(new_r6, params.c_evrp).second;
         if(dian3+dian4-routeU->fit_charge-routeV->fit_charge>-MY_EPSILON)
             return false;
     }
@@ -1243,114 +1243,8 @@ void LocalSearch::add_f3(vector<int>& g, vector<int> add, int after)
 }
 
 
-pair<vector<int>, double> LocalSearch::insertStationByRemove2(vector<int> route, Case& instance)
-{
-    list<pair<int, int>> stationInserted;
-    for (int i = 0; i < (int)route.size() - 1; i++) {
-        double allowedDis = instance.maxDis;
-        if (i != 0) {
-            allowedDis = instance.maxDis - instance.distances[stationInserted.back().second][route[i]];
-        }
-        int onestation = instance.findNearestStationFeasible(route[i], route[i + 1], allowedDis);
-        if (onestation == -1) return make_pair(route, INT_MAX);
-        stationInserted.push_back(make_pair(i, onestation));
-    }
-    /*for (int i = 0; i < (int)route.size() - 1; i++) {
-        stationInserted.push_back(make_pair(i, instance.bestStation[route[i]][route[i + 1]]));
-    }*/
-    while (!stationInserted.empty())
-    {
-        bool changed = false;
-        list<pair<int, int>>::iterator delone = stationInserted.begin();
-        double savedis = 0;
-        list<pair<int, int>>::iterator itr = stationInserted.begin();
-        list<pair<int, int>>::iterator next = itr;
-        next++;
-        if (next != stationInserted.end()) {
-            int endInd = next->first;
-            int endstation = next->second;
-            double sumdis = 0;
-            for (int i = 0; i < endInd; i++) {
-                sumdis += instance.distances[route[i]][route[i + 1]];
-            }
-            sumdis += instance.distances[route[endInd]][endstation];
-            if (sumdis <= instance.maxDis) {
-                savedis = instance.distances[route[itr->first]][itr->second] + instance.distances[itr->second][route[itr->first + 1]]
-                          - instance.distances[route[itr->first]][route[itr->first + 1]];
-            }
-        }
-        else {
-            double sumdis = 0;
-            for (int i = 0; i < (int)route.size() - 1; i++) {
-                sumdis += instance.distances[route[i]][route[i + 1]];
-            }
-            if (sumdis <= instance.maxDis) {
-                savedis = instance.distances[route[itr->first]][itr->second] + instance.distances[itr->second][route[itr->first + 1]]
-                          - instance.distances[route[itr->first]][route[itr->first + 1]];
-            }
-        }
-        itr++;
-        while (itr != stationInserted.end())
-        {
-            int startInd, endInd;
-            next = itr;
-            next++;
-            list<pair<int, int>>::iterator prev = itr;
-            prev--;
-            double sumdis = 0;
-            if (next != stationInserted.end()) {
-                startInd = prev->first + 1;
-                endInd = next->first;
-                sumdis += instance.distances[prev->second][route[startInd]];
-                for (int i = startInd; i < endInd; i++) {
-                    sumdis += instance.distances[route[i]][route[i + 1]];
-                }
-                sumdis += instance.distances[route[endInd]][next->second];
-                if (sumdis <= instance.maxDis) {
-                    double savedistemp = instance.distances[route[itr->first]][itr->second] + instance.distances[itr->second][route[itr->first + 1]]
-                                         - instance.distances[route[itr->first]][route[itr->first + 1]];
-                    if (savedistemp > savedis) {
-                        savedis = savedistemp;
-                        delone = itr;
-                    }
-                }
-            }
-            else {
-                startInd = prev->first + 1;
-                sumdis += instance.distances[prev->second][route[startInd]];
-                for (int i = startInd; i < (int)route.size() - 1; i++) {
-                    sumdis += instance.distances[route[i]][route[i + 1]];
-                }
-                if (sumdis <= instance.maxDis) {
-                    double savedistemp = instance.distances[route[itr->first]][itr->second] + instance.distances[itr->second][route[itr->first + 1]]
-                                         - instance.distances[route[itr->first]][route[itr->first + 1]];
-                    if (savedistemp > savedis) {
-                        savedis = savedistemp;
-                        delone = itr;
-                    }
-                }
-            }
-            itr++;
-        }
-        if (savedis != 0) {
-            stationInserted.erase(delone);
-            changed = true;
-        }
-        if (!changed) {
-            break;
-        }
-    }
-    while (!stationInserted.empty())
-    {
-        route.insert(route.begin() + stationInserted.back().first + 1, stationInserted.back().second);
-        stationInserted.pop_back();
-    }
-    double summ = 0;
-    for (int i = 0; i < (int)route.size() - 1; i++) {
-        summ += instance.distances[route[i]][route[i + 1]];
-    }
-    return make_pair(route, summ);
-}
+
+
 // 更新路线的预处理数据
 void LocalSearch::updateRouteData(Route * myRoute)
 {
@@ -1415,7 +1309,7 @@ void LocalSearch::updateRouteData(Route * myRoute)
     if(temp_route.size() <= 2)
         myRoute->fit_charge=INT_MAX;
     else
-        myRoute->fit_charge=insertStationByRemove2(temp_route, params.c_evrp).second;
+        myRoute->fit_charge= focusEnumeration(temp_route, params.c_evrp).second;
 }
 
 double LocalSearch::calRouteCharge(Route * myRoute)
@@ -1430,7 +1324,7 @@ double LocalSearch::calRouteCharge(Route * myRoute)
 
         firstIt = false;
     }
-    auto fitness_evrp=insertStationByRemove2(r2,params.c_evrp).second;
+    auto fitness_evrp= focusEnumeration(r2, params.c_evrp).second;
     return fitness_evrp;
 
 }

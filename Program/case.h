@@ -28,6 +28,7 @@ using namespace std;
 
 class Case {
 public:
+    Case();
 	Case(string, int);
 	~Case();
 	double getDistance(int, int);
@@ -41,7 +42,7 @@ public:
 	int findNearestStation(int);
 	int findNearestStation(int, int);
 	// 寻找最近的可行充电站
-	int findNearestStationFeasible(int, int, double) const;
+	int findNearestStationFeasible(int, int, double);
 	int findNearestStationFeasible2(int, int, double);
 	// 输出所有位置
 	void writeAllPositions();
@@ -65,7 +66,7 @@ public:
 	int depot;// 仓库编号
 	vector<pair<double, double>> positions;// 所有点的位置
 	vector<vector<double>> distances;
-	
+    // 每个客户点最佳充电站--duo
 	vector<vector<vector<int>>> bestStations;
 	// 每个客户点最佳充电站
 	vector<vector<int>> bestStation;
@@ -81,9 +82,47 @@ public:
 	vector<vector<int>> candidatelist;//一个二维向量，表示候选列表。
 
 	vector<vector<int>> correlatedVertices;//存储最近的20个节点
+    
+    // feng's change
+
+    
+    int totalNumber=0;
+    
+    vector<vector<pair<int,double>>> bs2;
+    // 检查一条ev route是否电力可行
+    bool checkAevRoute(vector<int>& route);
+    // 计算一条VRP route长度
+    double caluAvroute(vector<int>& route);
+    
+    vector<vector<vector<int>>> feng6_bestStations;
+    vector<int> findTheNonDominatedStations_feng(int, int);
 };
 
-pair<vector<int>, double> insertStationByRemove5(vector<int> route,const Case& instance);
-pair<double, vector<vector<int>>> chroSplit_new5(vector<int> x, Case instance);
-double calCost(vector<vector<int>>& allRoutes,const Case& instance);
+
+//移除启发
+//pair<vector<int>, double> insertStationByRemove5(vector<int> route,Case& instance);
+
+pair<double, vector<vector<int>>> chroSplit_new5(vector<int> x, Case& instance);
+
+
+
+// 一些小零件
+double calCost(vector<vector<int>>& allRoutes,Case& instance);
+// 将vrp解与cs插入方案融合，成为ev route
+vector<int> blendRoute(vector<int> route, vector<vector<int>>& ins);
+
+
+
+
+// 焦点枚举
+void focus_tryACertainN(int mlen, int nlen, int* chosenSta, int* chosenPos, vector<int>& finalRoute, double& finalfit, int curub, vector<int>& route, vector<double>& accumulateDis, Case& instance);
+pair<vector<int>, double> focusEnumeration(vector<int> route, Case& instance);
+
+
+//// 限制枚举
+//void tryACertainN(int mlen, int nlen, int* chosenSta, int* chosenPos, vector<int>& finalRoute, double& finalfit, int curub, vector<int>& route, vector<double>& accumulateDis, Case* instance);
+//pair<vector<int>, double> insertStationByEnumeration(vector<int> route, Case* instance);
+
+
+
 #endif

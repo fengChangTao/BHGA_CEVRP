@@ -63,7 +63,7 @@ public:
 	std::vector< std::vector< int > > correlatedVertices;	// 邻域限制：对于每个客户，列出附近的客户列表
 	bool areCoordinatesProvided;                            // 检查是否提供了有效的坐标
 
-    Case c_evrp=Case("../Instances/CVRP/X-n143-k7.evrp",1);	// 引入evrp实例
+    Case c_evrp;	// 引入evrp实例
 	string s1="";
     int mode=0;
 	int dai=0;

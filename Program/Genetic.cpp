@@ -17,12 +17,14 @@ void Genetic::run()
         auto off_backup=offspring;
 		/* 局部搜索 */
 		localSearch.run(offspring, params.penaltyCapacity, params.penaltyDuration);
+        // 如果变差了，就用原个体
         if(double qian2=offspring.eval.penalizedCost;params.hou==2&&(qian2-qian1>MY_EPSILON))
         {
             offspring=off_backup;
         }
 		bool isNewBest = population.addIndividual(offspring,true);
-		if (!offspring.eval.isFeasible && params.ran()%2 == 0) // 在不可行的情况下修复一半的解决方案
+        // 在不可行的情况下修复一半的解决方案
+		if (!offspring.eval.isFeasible && params.ran()%2 == 0)
 		{
 			localSearch.run(offspring, params.penaltyCapacity*10., params.penaltyDuration*10.);
 			if (offspring.eval.isFeasible) isNewBest = (population.addIndividual(offspring,false) || isNewBest);

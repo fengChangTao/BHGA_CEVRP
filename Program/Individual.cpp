@@ -11,7 +11,7 @@
 
 
 
-void Individual::evaluateCompleteCost(const Params & params)
+void Individual::evaluateCompleteCost(Params & params)
 {
 	eval = EvalIndiv();
 	for (int r = 0; r < params.nbVehicles; r++)

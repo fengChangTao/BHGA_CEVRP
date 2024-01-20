@@ -169,7 +169,7 @@ private:
     static void remove_f3(vector<int>& g, vector<int> shanChu);
     static void add_f3(vector<int>& g, vector<int> add, int after);
     static bool isEqual(const std::vector<int>& v1, const std::vector<int>& v2);
-    static pair<vector<int>, double> insertStationByRemove2(vector<int> route, Case& instance);
+
     double calRouteCharge(Route * myRoute);
     vector<int> seeRoute(Route * myRoute);
     

@@ -1,5 +1,8 @@
 #include "case.h"
+Case::Case()
+{
 
+}
 Case::Case(string filename, int ID) {
 	this->ID = ID;
 	this->filename = filename;
@@ -87,7 +90,7 @@ Case::Case(string filename, int ID) {
 			}
 		}
 	}
-	int totalNumber = depotNumber + customerNumber + stationNumber;
+	totalNumber = depotNumber + customerNumber + stationNumber;
 
 	this->distances.resize(totalNumber, vector<double>(totalNumber, 0));
 
@@ -130,6 +133,87 @@ Case::Case(string filename, int ID) {
 	}
 
 	this->candidatelist = getCandiList2(20);
+    // new features
+    bs2.resize(depotNumber + customerNumber, vector<pair<int,double>>(depotNumber + customerNumber,pair<int,double>(-1,0)));
+    for (int i = 0; i < depotNumber + customerNumber - 1; i++)
+    {
+        for (int j = i + 1; j < depotNumber + customerNumber - 1; j++)
+        {
+            int cs = 0;
+            double a, b, c;
+            double duo = 0;
+            if (this->bestStation[i][j]!=0)
+            {
+                cs = this->bestStation[i][j];
+                a = this->distances[i][cs];
+                b = this->distances[cs][j];
+                c = this->distances[i][j];
+                duo = a + b - c;
+                this->bs2[i][j].second = this->bs2[j][i].second = duo;
+                if ((pow(a, 2) + pow(b, 2) > pow(c, 2))&&i!=0)
+                {
+                    this->bs2[i][j].first = this->bs2[j][i].first = 2;
+                }
+            }
+            
+        }
+    }
+
+
+    
+    feng6_bestStations.resize(depotNumber + customerNumber, vector<vector<int>>(depotNumber + customerNumber));
+    // 对0-other的候选cs进行过滤
+    int su2=0,su3=0;
+    // 对0-other部分，用自己规则,筛选候选cs-多个
+    for(int j=1;j<depotNumber + customerNumber;j++)
+    {
+        
+        auto kkk=bestStations[0][j];
+        vector<tuple<int,double,double>> biao;
+        for(auto h:kkk)
+        {
+            int csk=h;
+            double akkb=distances[0][csk]+distances[csk][j];
+            double kb=distances[csk][j];
+            tuple<int,double,double> temp(csk,akkb,kb);
+            biao.push_back(temp);
+            
+        }
+        std::sort(biao.begin(), biao.end(), [](const tuple<int, double, double>& a, const tuple<int, double, double>& b) {
+            if (get<1>(a) != get<1>(b)) return get<1>(a) < get<1>(b); // Compare second elements
+            if (get<2>(a) != get<2>(b)) return get<2>(a) < get<2>(b); // Compare third elements
+            return get<0>(a) < get<0>(b); // Finally compare first elements
+        });
+        
+        vector<tuple<int,double,double>> temp_biao;
+        //遍历biao中的元素，合适的加入feng6_bestStations[0][j]
+        double lastKb = INT_MAX; // 用于存储前一个元素的第三个字段
+        for (const auto& item : biao) {
+            double currentKb = get<2>(item); // 当前元素的第三个字段
+            if (lastKb-currentKb>0.00001 ) {
+                feng6_bestStations[0][j].push_back(get<0>(item)); // 将当前元素添加到feng6_bestStations[0][j]
+                feng6_bestStations[j][0].push_back(get<0>(item));
+                lastKb = currentKb; // 更新lastKb
+            }
+            else
+            {
+                continue;
+            }
+
+        }
+        su2+=kkk.size();
+        su3+=feng6_bestStations[0][j].size();
+    }
+    // 其他部分，照搬候选cs-单个
+    for(int i=1;i<depotNumber + customerNumber;i++)
+    {
+        for(int j=i+1;j<depotNumber + customerNumber;j++)
+        {
+            feng6_bestStations[i][j].push_back(bestStation[i][j]);
+            feng6_bestStations[j][i].push_back(bestStation[j][i]);
+        }
+    }
+    
 }
 
 vector<vector<int>> Case::getCandiList2(int candino) {
@@ -285,7 +369,7 @@ int Case::findNearestStation(int x, int y) {
 
 
 //reture the station within maxdis from x, and min dis[x][s]+dis[y][s]
-int Case::findNearestStationFeasible(int x, int y, double maxdis) const{
+int Case::findNearestStationFeasible(int x, int y, double maxdis){
 	int thestation = -1;
 	double bigdis = DBL_MAX;
 	for (int i = depotNumber + customerNumber; i < depotNumber + customerNumber + stationNumber; i++) {
@@ -423,116 +507,37 @@ void Case::checkASoluton(string filename) {
 	}
 }
 
-// 移除启发
-pair<vector<int>, double> insertStationByRemove5(vector<int> route, const Case& instance) {
-    list<pair<int, int>> stationInserted;
-    for (int i = 0; i < (int)route.size() - 1; i++) {
-        double allowedDis = instance.maxDis;
-        if (i != 0) {
-            allowedDis = instance.maxDis - instance.distances[stationInserted.back().second][route[i]];
-        }
-        int onestation = instance.findNearestStationFeasible(route[i], route[i + 1], allowedDis);
-        if (onestation == -1) return make_pair(route, INT_MAX);
-        stationInserted.push_back(make_pair(i, onestation));
-    }
-    /*for (int i = 0; i < (int)route.size() - 1; i++) {
-        stationInserted.push_back(make_pair(i, instance.bestStation[route[i]][route[i + 1]]));
-    }*/
-    while (!stationInserted.empty())
-    {
-        bool changed = false;
-        list<pair<int, int>>::iterator delone = stationInserted.begin();
-        double savedis = 0;
-        list<pair<int, int>>::iterator itr = stationInserted.begin();
-        list<pair<int, int>>::iterator next = itr;
-        next++;
-        if (next != stationInserted.end()) {
-            int endInd = next->first;
-            int endstation = next->second;
-            double sumdis = 0;
-            for (int i = 0; i < endInd; i++) {
-                sumdis += instance.distances[route[i]][route[i + 1]];
-            }
-            sumdis += instance.distances[route[endInd]][endstation];
-            if (sumdis <= instance.maxDis) {
-                savedis = instance.distances[route[itr->first]][itr->second] + instance.distances[itr->second][route[itr->first + 1]]
-                          - instance.distances[route[itr->first]][route[itr->first + 1]];
+vector<int> Case::findTheNonDominatedStations_feng(int x, int y) {
+    vector<int> temp;
+    for (int i = this->customerNumber + this->depotNumber; i < this->customerNumber + this->depotNumber + this->stationNumber; i++) {
+        bool bedominated = false;
+        for (auto e : temp) {
+            if (this->distances[x][e] <= this->distances[x][i] &&
+                this->distances[e][y] <= this->distances[i][y]) {
+                bedominated = true;
+                break;
             }
         }
-        else {
-            double sumdis = 0;
-            for (int i = 0; i < (int)route.size() - 1; i++) {
-                sumdis += instance.distances[route[i]][route[i + 1]];
-            }
-            if (sumdis <= instance.maxDis) {
-                savedis = instance.distances[route[itr->first]][itr->second] + instance.distances[itr->second][route[itr->first + 1]]
-                          - instance.distances[route[itr->first]][route[itr->first + 1]];
-            }
-        }
-        itr++;
-        while (itr != stationInserted.end())
-        {
-            int startInd, endInd;
-            next = itr;
-            next++;
-            list<pair<int, int>>::iterator prev = itr;
-            prev--;
-            double sumdis = 0;
-            if (next != stationInserted.end()) {
-                startInd = prev->first + 1;
-                endInd = next->first;
-                sumdis += instance.distances[prev->second][route[startInd]];
-                for (int i = startInd; i < endInd; i++) {
-                    sumdis += instance.distances[route[i]][route[i + 1]];
-                }
-                sumdis += instance.distances[route[endInd]][next->second];
-                if (sumdis <= instance.maxDis) {
-                    double savedistemp = instance.distances[route[itr->first]][itr->second] + instance.distances[itr->second][route[itr->first + 1]]
-                                         - instance.distances[route[itr->first]][route[itr->first + 1]];
-                    if (savedistemp > savedis) {
-                        savedis = savedistemp;
-                        delone = itr;
-                    }
+        if (bedominated == false) {
+            for (int j = 0; j < (int)temp.size(); j++) {
+                if (this->distances[x][i] <= this->distances[x][temp[j]] &&
+                    this->distances[i][y] <= this->distances[temp[j]][y]) {
+                    temp.erase(temp.begin() + j);
+                    j--;
                 }
             }
-            else {
-                startInd = prev->first + 1;
-                sumdis += instance.distances[prev->second][route[startInd]];
-                for (int i = startInd; i < (int)route.size() - 1; i++) {
-                    sumdis += instance.distances[route[i]][route[i + 1]];
-                }
-                if (sumdis <= instance.maxDis) {
-                    double savedistemp = instance.distances[route[itr->first]][itr->second] + instance.distances[itr->second][route[itr->first + 1]]
-                                         - instance.distances[route[itr->first]][route[itr->first + 1]];
-                    if (savedistemp > savedis) {
-                        savedis = savedistemp;
-                        delone = itr;
-                    }
-                }
-            }
-            itr++;
-        }
-        if (savedis != 0) {
-            stationInserted.erase(delone);
-            changed = true;
-        }
-        if (!changed) {
-            break;
+            temp.push_back(i);
         }
     }
-    while (!stationInserted.empty())
-    {
-        route.insert(route.begin() + stationInserted.back().first + 1, stationInserted.back().second);
-        stationInserted.pop_back();
-    }
-    double summ = 0;
-    for (int i = 0; i < (int)route.size() - 1; i++) {
-        summ += instance.distances[route[i]][route[i + 1]];
-    }
-    return make_pair(route, summ);
+    return temp;
 }
-// 传统的Split分割算法
-pair<double, vector<vector<int>>> chroSplit_new5(vector<int> x, Case instance) {
+
+
+
+
+
+// 传统的Split分割算法，很少用了，可能是原来Case复制这里太费时
+pair<double, vector<vector<int>>> chroSplit_new5(vector<int> x, Case& instance) {
     x.insert(x.begin(), 0);
     int lens = instance.depotNumber + instance.customerNumber;
     vector<int> pp(lens, 0);
@@ -586,13 +591,14 @@ pair<double, vector<vector<int>>> chroSplit_new5(vector<int> x, Case instance) {
         // 在route的末尾添加一个0
         route.push_back(0);
         
-        totalDistance +=insertStationByRemove5(route, instance).second;
+        totalDistance +=focusEnumeration(route, instance).second;
     }
     
     return pair<double, vector<vector<int>>>(totalDistance, allroutes);
 }
 
-double calCost(vector<vector<int>>& allRoutes,const Case& instance)
+// 用于个体中计算cost
+double calCost(vector<vector<int>>& allRoutes,Case& instance)
 {
     double cost=0;
     for(auto route:allRoutes)
@@ -600,7 +606,330 @@ double calCost(vector<vector<int>>& allRoutes,const Case& instance)
         if(route.size()==0) continue;
         route.insert(route.begin(), 0);
         route.push_back(0);
-        cost+=insertStationByRemove5(route,instance).second;
+        cost+=focusEnumeration(route,instance).second;
     }
     return cost;
 }
+
+bool Case::checkAevRoute(vector<int>& route)
+{
+    double ssum = 0;
+    for (int i = 0; i < route.size() - 1; i++)
+    {
+        ssum += this->distances[route[i]][route[i + 1]];
+        if (ssum - this->maxDis > 0.00001)
+            return false;
+        if (route[i + 1] >= depotNumber + customerNumber)
+            ssum = 0;
+    }
+    return true;
+}
+double Case::caluAvroute(vector<int>& route)
+{
+    double ssum = 0;
+    for (int i = 0; i < route.size() - 1; i++)
+        ssum += this->distances[route[i]][route[i + 1]];
+    return ssum;
+}
+vector<int> blendRoute(vector<int> route, vector<vector<int>>& ins)
+{
+    for (int i = ins.size() - 1; i >= 0; i--)
+    {
+        if (ins[i].size() != 0)
+        {
+            if (i <= route.size()) {
+                // 在route[i]后插入ins[i]的所有元素
+                route.insert(route.begin() + i + 1, ins[i].begin(), ins[i].end());
+            }
+            
+        }
+    }
+    return route;
+}
+
+pair<vector<int>, double> clusterEnumeration(vector<int> route, Case& instance)
+{
+    double yuan = instance.caluAvroute(route);
+    int lb = floor( yuan/ instance.maxDis);
+    int ub = lb + 1;
+    if (lb <= 0)
+        return pair<vector<int>, double>(route,yuan);
+    // 间隙，连续的2为一个聚类
+    vector<pair<int,double>> jian(route.size() - 1, pair<int,double>(-1,-1));
+    for (int i = 0; i < route.size() - 1; i++)
+    {
+        jian[i].first = instance.bs2[route[i]][route[i + 1]].first;
+        jian[i].second = instance.bs2[route[i]][route[i + 1]].second;
+    }
+    // 聚类中，也寻找一个间隙，使其变为-1
+    double now=INT_MAX;
+    int select=-1;
+    unordered_set<int> need;
+    
+    for(int i=0;i<jian.size();i++)
+    {
+        if(jian[i].first==-1)
+        {
+            if(select!=-1)
+            {
+                need.insert(select);
+            }
+            now=INT_MAX;
+            select=-1;
+            continue;
+        }
+        if(jian[i].second<now)
+        {
+            now=jian[i].second;
+            select=i;
+        }
+        
+    }
+    for(auto& h:need)
+        jian[h].first=-1;
+    
+    
+    
+    
+    return pair<vector<int>, double>(route,-1);
+}
+
+// 焦点枚举
+void focus_tryACertainN(int mlen, int nlen, int* chosenSta, int* chosenPos, vector<int>& finalRoute, double& finalfit, int curub, vector<int>& route, vector<double>& accumulateDis, Case& instance)
+{
+    for (int i = mlen; i <= (int)route.size() - 1 - nlen; i++) {
+        // 瞻前
+        if (curub == nlen) {
+            if (accumulateDis[i] - instance.maxDis > 0.00001) {
+                break;
+            }
+        }
+        else {
+            int lastpos = chosenPos[curub - nlen - 1];
+            auto lastcs = chosenSta[curub - nlen - 1];
+            double onedis = instance.distances[route[lastpos + 1]][lastcs];
+            if (onedis + accumulateDis[i] - accumulateDis[lastpos + 1] - instance.maxDis > 0.00001)
+                break;
+            
+        }
+        // 顾后
+        if (nlen >= 1) {
+            if (accumulateDis.back() - accumulateDis[i + 1] - nlen * (instance.maxDis) > 0.00001) {
+                continue;
+            }
+        }
+        
+        //if (nlen == 1) {
+        //	if (accumulateDis.back() - accumulateDis[i + 1] >= instance->maxDis) {
+        //		continue;
+        //	}
+        //}
+        
+        
+        
+        
+        for (int j = 0; j < (int)instance.feng6_bestStations[route[i]][route[i + 1]].size(); j++) {
+            // 再次瞻前
+            auto select_cs = instance.feng6_bestStations[route[i]][route[i + 1]][j];
+            double qian = instance.distances[route[i]][select_cs];
+            
+            if (curub == nlen) {
+                if (qian + accumulateDis[i] - instance.maxDis > 0.00001) {
+                    continue;
+                }
+            }
+            else {
+                int lastpos = chosenPos[curub - nlen - 1];
+                auto lastcs = chosenSta[curub - nlen - 1];
+                double onedis = instance.distances[route[lastpos + 1]][lastcs];
+                if (qian + onedis + accumulateDis[i] - accumulateDis[lastpos + 1] - instance.maxDis > 0.00001)
+                    continue;
+            }
+            
+            // 再次顾后
+            double hou = instance.distances[select_cs][route[i + 1]];
+            if (nlen >= 1) {
+                if (hou + accumulateDis.back() - accumulateDis[i + 1] - nlen * (instance.maxDis) > 0.00001) {
+                    continue;
+                }
+            }
+            chosenSta[curub - nlen] = instance.feng6_bestStations[route[i]][route[i + 1]][j];
+            chosenPos[curub - nlen] = i;
+            if (nlen > 1) {
+                focus_tryACertainN(i + 1, nlen - 1, chosenSta, chosenPos, finalRoute, finalfit, curub, route, accumulateDis, instance);
+            }
+            else {
+                bool feasible = true;
+                double piecedis = accumulateDis[chosenPos[0]] + instance.distances[route[chosenPos[0]]][chosenSta[0]];
+                if (piecedis > instance.maxDis)
+                    feasible = false;
+                for (int k = 1; feasible && k < curub; k++) {
+                    piecedis = accumulateDis[chosenPos[k]] - accumulateDis[chosenPos[k - 1] + 1];
+                    piecedis += instance.distances[chosenSta[k - 1]][route[chosenPos[k - 1] + 1]];
+                    piecedis += instance.distances[chosenSta[k]][route[chosenPos[k]]];
+                    if (piecedis > instance.maxDis) feasible = false;
+                }
+                piecedis = accumulateDis.back() - accumulateDis[chosenPos[curub - 1] + 1];
+                piecedis += instance.distances[route[chosenPos[curub - 1] + 1]][chosenSta[curub - 1]];
+                if (piecedis > instance.maxDis)
+                {
+                    feasible = false;
+                }
+                
+                if (feasible) {
+                    double totaldis = accumulateDis.back();
+                    for (int k = 0; k < curub; k++) {
+                        int firstnode = route[chosenPos[k]];
+                        int secondnode = route[chosenPos[k] + 1];
+                        totaldis -= instance.distances[firstnode][secondnode];
+                        totaldis += instance.distances[firstnode][chosenSta[k]];
+                        totaldis += instance.distances[chosenSta[k]][secondnode];
+                    }
+                    if (totaldis < finalfit) {
+                        finalfit = totaldis;
+                        finalRoute = route;
+                        for (int k = curub - 1; k >= 0; k--) {
+                            finalRoute.insert(finalRoute.begin() + chosenPos[k] + 1, chosenSta[k]);
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+pair<vector<int>, double> focusEnumeration(vector<int> route, Case& instance)
+{
+    //计算累计距离
+    vector<double> accumulateDistance(route.size(), 0);
+    for (int i = 1; i < (int)route.size(); i++) {
+        accumulateDistance[i] = accumulateDistance[i - 1] + instance.distances[route[i]][route[i - 1]];
+    }
+    //说明不需要充电
+    if (accumulateDistance.back() <= instance.maxDis) {
+        return make_pair(route, accumulateDistance.back());
+    }
+    
+    int ub = (int)(accumulateDistance.back() / instance.maxDis + 1);
+    int lb = (int)(accumulateDistance.back() / instance.maxDis);
+    int* chosenPos = new int[route.size()];
+    int* chosenSta = new int[route.size()];
+    vector<int> finalRoute;		//最终路线
+    double finalfit = DBL_MAX;	//最终适应度
+    for (int i = lb; i <= ub; i++) {
+        focus_tryACertainN(0, i, chosenSta, chosenPos, finalRoute, finalfit, i, route, accumulateDistance, instance);
+    }
+    delete[] chosenPos;
+    delete[] chosenSta;
+    if (finalfit != DBL_MAX) {
+        return make_pair(finalRoute, finalfit);
+    }
+    else {
+        return make_pair(route, INT_MAX);
+    }
+}
+
+//// 限制枚举
+//void tryACertainN(int mlen, int nlen, int* chosenSta, int* chosenPos, vector<int>& finalRoute, double& finalfit, int curub, vector<int>& route, vector<double>& accumulateDis, Case* instance)
+//{
+//    // 遍历路径中的每个位置，以确定充电站的插入位置
+//    for (int i = mlen; i <= (int)route.size() - 1 - nlen; i++) {
+//        // 瞻前，看看前半段是否满足充电约束
+//        if (curub == nlen) {
+//            // 如果还没插入过充电站
+//            if (accumulateDis[i] >= instance->maxDis) {
+//                break;
+//            }
+//        }
+//        else {
+//            // 如果前面有充电站了，确保从上一个充电站到当前位置的距离不超过最大距离
+//            if (accumulateDis[i] - accumulateDis[chosenPos[curub - nlen - 1] + 1] >= instance->maxDis) {
+//                break;
+//            }
+//        }
+//        // 顾后，看看后半段是否还有希望
+//        if (nlen == 1) {
+//            // 如果只剩一个充电站未确定，确保从当前位置到终点的距离不超过最大距离
+//            if (accumulateDis.back() - accumulateDis[i + 1] >= instance->maxDis) {
+//                continue;
+//            }
+//        }
+//        // 遍历当前间隔所有可选择的cs
+//        for (int j = 0; j < (int)instance->bestStations[route[i]][route[i + 1]].size(); j++) {
+//            // 选定一个充电站和对应的位置
+//            chosenSta[curub - nlen] = instance->bestStations[route[i]][route[i + 1]][j];
+//            chosenPos[curub - nlen] = i;
+//            // 如果还需要确定更多充电站的位置，递归调用此函数
+//            if (nlen > 1) {
+//                tryACertainN(i + 1, nlen - 1, chosenSta, chosenPos, finalRoute, finalfit, curub, route, accumulateDis, instance);
+//            }
+//            else {
+//                // 如果已确定所有充电站位置，检查整条路线是否满足距离约束
+//                bool feasible = true;
+//                // 计算从起点到第一个充电站的距离
+//                double piecedis = accumulateDis[chosenPos[0]] + instance->distances[route[chosenPos[0]]][chosenSta[0]];
+//                if (piecedis > instance->maxDis) feasible = false;
+//                // 计算每两个充电站之间的距离
+//                for (int k = 1; feasible && k < curub; k++) {
+//                    piecedis = accumulateDis[chosenPos[k]] - accumulateDis[chosenPos[k - 1] + 1];
+//                    piecedis += instance->distances[chosenSta[k - 1]][route[chosenPos[k - 1] + 1]];
+//                    piecedis += instance->distances[chosenSta[k]][route[chosenPos[k]]];
+//                    if (piecedis > instance->maxDis) feasible = false;
+//                }
+//                // 计算从最后一个充电站到终点的距离
+//                piecedis = accumulateDis.back() - accumulateDis[chosenPos[curub - 1] + 1];
+//                piecedis += instance->distances[route[chosenPos[curub - 1] + 1]][chosenSta[curub - 1]];
+//                if (piecedis > instance->maxDis) feasible = false;
+//                // 如果当前配置可行，计算整条路线的总距离，并更新最优解
+//                if (feasible) {
+//                    double totaldis = accumulateDis.back();
+//                    for (int k = 0; k < curub; k++) {
+//                        int firstnode = route[chosenPos[k]];
+//                        int secondnode = route[chosenPos[k] + 1];
+//                        totaldis -= instance->distances[firstnode][secondnode];
+//                        totaldis += instance->distances[firstnode][chosenSta[k]];
+//                        totaldis += instance->distances[chosenSta[k]][secondnode];
+//                    }
+//                    if (totaldis < finalfit) {
+//                        finalfit = totaldis;
+//                        finalRoute = route;
+//                        for (int k = curub - 1; k >= 0; k--) {
+//                            finalRoute.insert(finalRoute.begin() + chosenPos[k] + 1, chosenSta[k]);
+//                        }
+//                    }
+//                }
+//            }
+//        }
+//    }
+//}
+//pair<vector<int>, double> insertStationByEnumeration(vector<int> route, Case* instance)
+//{
+//    //计算累计距离
+//    vector<double> accumulateDistance(route.size(), 0);
+//    for (int i = 1; i < (int)route.size(); i++) {
+//        accumulateDistance[i] = accumulateDistance[i - 1] + instance->distances[route[i]][route[i - 1]];
+//    }
+//    //说明不需要充电
+//    if (accumulateDistance.back() <= instance->maxDis) {
+//        return make_pair(route, accumulateDistance.back());
+//    }
+//
+//    int ub = (int)(accumulateDistance.back() / instance->maxDis + 3);
+//    int lb = (int)(accumulateDistance.back() / instance->maxDis);
+//    int* chosenPos = new int[route.size()];
+//    int* chosenSta = new int[route.size()];
+//    vector<int> finalRoute;		//最终路线
+//    double finalfit = DBL_MAX;	//最终适应度
+//    for (int i = lb; i <= ub; i++) {
+//        tryACertainN(0, i, chosenSta, chosenPos, finalRoute, finalfit, i, route, accumulateDistance, instance);
+//    }
+//    delete[] chosenPos;
+//    delete[] chosenSta;
+//    if (finalfit != DBL_MAX) {
+//        return make_pair(finalRoute, finalfit);
+//    }
+//    else {
+//        return make_pair(route, -1);
+//    }
+//}
+
+
