@@ -29,6 +29,7 @@ iterations without improvement
 
 ## References
 If you like this project, please cite the following works:
+
 [1] Feng, C. T., Jia, Y. H., Yang, Q., Chen, W. N., & Jiang, H. (2024, June). A Bilevel Hybrid Genetic Algorithm for Capacitated Electric Vehicle Routing Problem. In 2024 IEEE Congress on Evolutionary Computation (CEC) (pp. 1-8). IEEE.
 
 [2] Vidal, T. (2022). Hybrid genetic search for the CVRP: Open-source implementation and SWAP* neighborhood. Computers & Operations Research, 140, 105643.
