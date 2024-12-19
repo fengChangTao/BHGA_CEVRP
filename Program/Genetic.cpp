@@ -23,11 +23,12 @@ void Genetic::run()
             offspring=off_backup;
         }
 		bool isNewBest = population.addIndividual(offspring,true);
-        // 在不可行的情况下修复一半的解决方案
+        // 在不可行的情况下以一半的概率进行修复
 		if (!offspring.eval.isFeasible && params.ran()%2 == 0)
 		{
 			localSearch.run(offspring, params.penaltyCapacity*10., params.penaltyDuration*10.);
-			if (offspring.eval.isFeasible) isNewBest = (population.addIndividual(offspring,false) || isNewBest);
+			if (offspring.eval.isFeasible)
+                isNewBest = (population.addIndividual(offspring,false) || isNewBest);
 		}
 
 		/* 跟踪自上次解决方案改进以来的迭代次数 */

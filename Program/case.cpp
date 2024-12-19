@@ -698,7 +698,7 @@ pair<vector<int>, double> clusterEnumeration(vector<int> route, Case& instance)
 void focus_tryACertainN(int mlen, int nlen, int* chosenSta, int* chosenPos, vector<int>& finalRoute, double& finalfit, int curub, vector<int>& route, vector<double>& accumulateDis, Case& instance)
 {
     for (int i = mlen; i <= (int)route.size() - 1 - nlen; i++) {
-        // 瞻前
+        // 瞻前，检查前面部分是否满足充电约束，没有则剪枝
         if (curub == nlen) {
             if (accumulateDis[i] - instance.maxDis > 0.00001) {
                 break;
@@ -712,7 +712,7 @@ void focus_tryACertainN(int mlen, int nlen, int* chosenSta, int* chosenPos, vect
                 break;
             
         }
-        // 顾后
+        // 顾后，检查前面部分是否满足充电约束
         if (nlen >= 1) {
             if (accumulateDis.back() - accumulateDis[i + 1] - nlen * (instance.maxDis) > 0.00001) {
                 continue;
@@ -729,6 +729,7 @@ void focus_tryACertainN(int mlen, int nlen, int* chosenSta, int* chosenPos, vect
         
         
         for (int j = 0; j < (int)instance.feng6_bestStations[route[i]][route[i + 1]].size(); j++) {
+            // 尝试插入一个充电站
             // 再次瞻前
             auto select_cs = instance.feng6_bestStations[route[i]][route[i + 1]][j];
             double qian = instance.distances[route[i]][select_cs];
@@ -756,9 +757,11 @@ void focus_tryACertainN(int mlen, int nlen, int* chosenSta, int* chosenPos, vect
             chosenSta[curub - nlen] = instance.feng6_bestStations[route[i]][route[i + 1]][j];
             chosenPos[curub - nlen] = i;
             if (nlen > 1) {
+                // 如果还需要确定更多充电站的位置，递归调用此函数
                 focus_tryACertainN(i + 1, nlen - 1, chosenSta, chosenPos, finalRoute, finalfit, curub, route, accumulateDis, instance);
             }
             else {
+                // 如果已确定所有充电站位置，检查整条路线是否满足距离约束
                 bool feasible = true;
                 double piecedis = accumulateDis[chosenPos[0]] + instance.distances[route[chosenPos[0]]][chosenSta[0]];
                 if (piecedis > instance.maxDis)
@@ -775,7 +778,7 @@ void focus_tryACertainN(int mlen, int nlen, int* chosenSta, int* chosenPos, vect
                 {
                     feasible = false;
                 }
-                
+                // 如果当前配置可行，计算整条路线的总距离，并更新最优解
                 if (feasible) {
                     double totaldis = accumulateDis.back();
                     for (int k = 0; k < curub; k++) {
@@ -799,16 +802,16 @@ void focus_tryACertainN(int mlen, int nlen, int* chosenSta, int* chosenPos, vect
 }
 pair<vector<int>, double> focusEnumeration(vector<int> route, Case& instance)
 {
-    //计算累计距离
+    // 计算累计距离
     vector<double> accumulateDistance(route.size(), 0);
     for (int i = 1; i < (int)route.size(); i++) {
         accumulateDistance[i] = accumulateDistance[i - 1] + instance.distances[route[i]][route[i - 1]];
     }
-    //说明不需要充电
+    // 说明不需要充电
     if (accumulateDistance.back() <= instance.maxDis) {
         return make_pair(route, accumulateDistance.back());
     }
-    
+    // 计算上界和下界
     int ub = (int)(accumulateDistance.back() / instance.maxDis + 1);
     int lb = (int)(accumulateDistance.back() / instance.maxDis);
     int* chosenPos = new int[route.size()];

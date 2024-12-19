@@ -12,7 +12,8 @@ void Population::generatePopulation()
 		if (!randomIndiv.eval.isFeasible && params.ran() % 2 == 0)  // Repair half of the solutions in case of infeasibility
 		{
 			localSearch.run(randomIndiv, params.penaltyCapacity*10., params.penaltyDuration*10.);
-			if (randomIndiv.eval.isFeasible) addIndividual(randomIndiv, false);
+			if (randomIndiv.eval.isFeasible)
+                addIndividual(randomIndiv, false);
 		}
 	}
     params.isChu=false;

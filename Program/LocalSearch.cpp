@@ -60,7 +60,8 @@ void LocalSearch::run(Individual & indiv, double penaltyCapacityLS, double penal
      
 					if (move1()) continue; // RELOCATE
 					if (move2()) continue; // RELOCATE
-					if (move3()) continue; // RELOCATE
+					if (move3())
+                        continue; // RELOCATE
 					if (nodeUIndex <= nodeVIndex && move4()) continue; // SWAP
 					if (move5()) continue; // SWAP
 					if (nodeUIndex <= nodeVIndex && move6()) continue; // SWAP

@@ -1,15 +1,5 @@
 #include "Individual.h" 
 
-//pair<vector<int>, double> insertStationByFeng(vector<int> route, Case& instance)
-//{
-//    list<pair<int, int>> stationInserted;
-//    for(int i = 0; i < (int)route.size() - 1; i++)
-//    {
-//
-//    }
-//}
-
-
 
 void Individual::evaluateCompleteCost(Params & params)
 {
